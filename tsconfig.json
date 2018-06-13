@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": true,
+
+    // Coding style
+    "forceConsistentCasingInFileNames": true,
+    "newLine": "LF",
+    "noEmitOnError": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "strictNullChecks": true,
+
+    // Output
+    "module": "commonjs",
+    "target": "es5",
+    "sourceMap": false,
+    "outDir": "rules",
+    "removeComments": true,
+    "lib": ["es2018"]
+  },
+  "include": ["src/*.ts"]
+}
