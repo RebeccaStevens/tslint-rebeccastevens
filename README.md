@@ -20,10 +20,10 @@ Also note that values of type `ReadonlyArray<T>` cannot be provided to something
 "no-return-readonly-array": true
 ```
 
-[version-badge]: https://img.shields.io/npm/v/tslint-rebeccastevens.svg?style=flat-square
-[version-url]: https://www.npmjs.com/package/tslint-rebeccastevens
-[travis-badge]: https://travis-ci.org/RebeccaStevens/tslint-rebeccastevens.svg?branch=master&style=flat-square
-[travis-url]: https://travis-ci.org/RebeccaStevens/tslint-rebeccastevens
+[version-badge]: https://img.shields.io/npm/v/@rebeccastevens/tslint-rebeccastevens.svg?style=flat-square
+[version-url]: https://www.npmjs.com/package/@rebeccastevens/tslint-rebeccastevens
+[travis-badge]: https://travis-ci.com/RebeccaStevens/tslint-rebeccastevens.svg?branch=master
+[travis-url]: https://travis-ci.com/RebeccaStevens/tslint-rebeccastevens
 [license-badge]: https://img.shields.io/github/license/RebeccaStevens/tslint-rebeccastevens.svg?style=flat-square
 [license-url]: https://opensource.org/licenses/MIT
 
