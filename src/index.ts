@@ -1,2 +1,4 @@
-// this file exists for tslint to resolve the rules directory
+/**
+ * This file exists for tslint to resolve the rules directory
+ */
 export = { rulesDirectory: '.' };

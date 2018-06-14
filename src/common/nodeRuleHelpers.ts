@@ -1,5 +1,10 @@
-import * as ts from 'typescript';
+/**
+ * Helper funcation and types for creating tslint rules.
+ */
+
 import * as Lint from 'tslint';
+import * as ts from 'typescript';
+
 import {
   parseOptions as defaultParseOptions,
   ParseOptionsFunction
@@ -9,24 +14,20 @@ type NodeRuleFunction<TOptions> =
   | UntypedNodeRuleFunction<TOptions>
   | TypedNodeRuleFunction<TOptions>;
 
-export interface UntypedNodeRuleFunction<TOptions> {
-  (node: ts.Node, ctx: Lint.WalkContext<TOptions>): RuleFunctionResult;
-}
+export type UntypedNodeRuleFunction<TOptions> = (node: ts.Node, ctx: Lint.WalkContext<TOptions>) => IRuleFunctionResult;
 
-export interface TypedNodeRuleFunction<TOptions> {
-  (
+export type TypedNodeRuleFunction<TOptions> = (
     node: ts.Node,
     ctx: Lint.WalkContext<TOptions>,
     checker: ts.TypeChecker
-  ): RuleFunctionResult;
+  ) => IRuleFunctionResult;
+
+export interface IRuleFunctionResult {
+  readonly invalidNodes: ReadonlyArray<IInvalidNode>;
+  readonly skipChildren?: boolean;
 }
 
-export interface RuleFunctionResult {
-  invalidNodes: ReadonlyArray<InvalidNode>;
-  skipChildren?: boolean;
-}
-
-export interface InvalidNode {
+export interface IInvalidNode {
   readonly node: ts.Node;
   readonly replacements: Array<Lint.Replacement>;
 }
@@ -37,7 +38,7 @@ export function createNodeRule<TOptions>(
   parseOptions: ParseOptionsFunction<TOptions> = defaultParseOptions
 ): any {
   return class Rule extends Lint.Rules.AbstractRule {
-    public apply(sourceFile: ts.SourceFile): Lint.RuleFailure[] {
+    public apply(sourceFile: ts.SourceFile): Array<Lint.RuleFailure> {
       return this.applyWithFunction(
         sourceFile,
         (ctx: Lint.WalkContext<TOptions>) =>
@@ -57,7 +58,7 @@ export function createNodeTypedRule<TOptions>(
     public applyWithProgram(
       sourceFile: ts.SourceFile,
       program: ts.Program
-    ): Lint.RuleFailure[] {
+    ): Array<Lint.RuleFailure> {
       return this.applyWithFunction(
         sourceFile,
         (ctx: Lint.WalkContext<TOptions>, checker: ts.TypeChecker) =>
@@ -69,20 +70,13 @@ export function createNodeTypedRule<TOptions>(
   };
 }
 
-export function createInvalidNode(
-  node: ts.Node,
-  replacements: Array<Lint.Replacement>
-): InvalidNode {
-  return { node, replacements };
-}
-
 function walk<TOptions>(
   ctx: Lint.WalkContext<TOptions>,
   ruleFunction: NodeRuleFunction<TOptions>,
   failureString: string,
   checker?: ts.TypeChecker
 ): void {
-  return ts.forEachChild(ctx.sourceFile, function cb(node: ts.Node): void {
+  const cb = (node: ts.Node): void => {
     const { invalidNodes, skipChildren } =
       checker === undefined
         ? (ruleFunction as UntypedNodeRuleFunction<TOptions>)(node, ctx)
@@ -94,19 +88,28 @@ function walk<TOptions>(
     }
 
     return ts.forEachChild(node, cb);
-  });
+  };
+
+  return ts.forEachChild(ctx.sourceFile, cb);
 }
 
 function reportInvalidNodes<TOptions>(
-  invalidNodes: ReadonlyArray<InvalidNode>,
+  invalidNodes: ReadonlyArray<IInvalidNode>,
   ctx: Lint.WalkContext<TOptions>,
   failureString: string
 ): void {
-  invalidNodes.forEach(invalidNode =>
+  invalidNodes.forEach((invalidNode) =>
     ctx.addFailureAtNode(
       invalidNode.node,
       failureString,
       invalidNode.replacements
     )
   );
+}
+
+export function createInvalidNode(
+  node: ts.Node,
+  replacements: Array<Lint.Replacement>
+): IInvalidNode {
+  return { node, replacements };
 }
