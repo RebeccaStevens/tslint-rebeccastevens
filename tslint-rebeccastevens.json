@@ -453,6 +453,7 @@
      * tslint-microsoft-contrib rules.
      */
     "export-name": false,
+    "function-name": false, // using `naming-convention` instead.
     "import-name": false,
     "no-multiline-string": false,
     "no-relative-imports": false,
