@@ -410,8 +410,8 @@
       {
         "ignore-prefix": [
           "mutable",
-          "this.mutable",
           "_mutable",
+          "this.mutable",
           "this._mutable"
         ]
       }
@@ -423,8 +423,8 @@
       {
         "ignore-prefix": [
           "mutable",
-          "this.mutable",
           "_mutable",
+          "this.mutable",
           "this._mutable"
         ]
       }
@@ -434,13 +434,13 @@
       {
         "ignore-prefix": [
           "mutable",
-          "this.mutable",
           "_mutable",
+          "this.mutable",
           "this._mutable"
         ]
       }
     ],
-    "no-delete": true,
+    "no-delete": false, // using `no-array-mutation` and `no-object-mutation`.
     "no-method-signature": true,
     "no-loop-statement": true,
 
