@@ -109,7 +109,7 @@ function reportInvalidNodes<TOptions>(
 
 export function createInvalidNode(
   node: ts.Node,
-  replacements: Array<Lint.Replacement>
+  replacements: Array<Lint.Replacement> = []
 ): IInvalidNode {
   return { node, replacements };
 }

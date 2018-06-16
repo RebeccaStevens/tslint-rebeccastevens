@@ -3,4 +3,9 @@ function test(): ReadonlyArray<number> {
   return [0, 1, 2];
 }
 
+async function asyncTest(): Promise<ReadonlyArray<number>> {
+                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [failure]
+  await test();
+}
+
 [failure]: Do not return a ReadonlyArray; return an Array instead.

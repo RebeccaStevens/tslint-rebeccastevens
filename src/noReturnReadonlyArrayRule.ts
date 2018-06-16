@@ -8,7 +8,6 @@
  * Also note that values of type `ReadonlyArray<T>` cannot be provided to something wanting the type `Array<T>`.
  */
 
-import * as Lint from 'tslint';
 import * as ts from 'typescript';
 
 import {
@@ -18,38 +17,63 @@ import {
   IRuleFunctionResult
 } from './common/nodeRuleHelpers';
 
-// tslint:disable-next-line:variable-name naming-convention
+// tslint:disable-next-line:naming-convention
 export const Rule = createNodeRule(
   ruleFunction,
   'Do not return a ReadonlyArray; return an Array instead.'
 );
 
-// tslint:disable-next-line:interface-over-type-literal
-type Options = {};
-
 function ruleFunction(
-  node: ts.Node,
-  ctx: Lint.WalkContext<Options>
+  node: ts.Node
 ): IRuleFunctionResult {
-  return { invalidNodes: getInvalidNodes(node, ctx) };
+  return { invalidNodes: getInvalidNodes(node) };
 }
 
-function getInvalidNodes(
-  node: ts.Node,
-  _ctx: Lint.WalkContext<Options>
-): Array<IInvalidNode> {
-  if (node.kind === ts.SyntaxKind.FunctionDeclaration) {
-    const functionDeclaration = node as ts.FunctionDeclaration;
-    if (functionDeclaration.type !== undefined) {
-      const returnType = functionDeclaration.type as ts.TypeReferenceNode;
-      if (returnType.typeName !== undefined && returnType.typeName.kind === ts.SyntaxKind.Identifier) {
-        const identifier = returnType.typeName as ts.Identifier;
-        if (identifier.text === 'ReadonlyArray') {
-          return [createInvalidNode(returnType, [])];
-        }
-      }
-    }
+/**
+ * Does the given node vialate this rule?
+ */
+function getInvalidNodes(node: ts.Node): Array<IInvalidNode> {
+  if (node.kind !== ts.SyntaxKind.FunctionDeclaration) {
+    return [];
   }
 
-  return [];
+  const functionDeclaration = node as ts.FunctionDeclaration;
+  if (functionDeclaration.type === undefined) {
+    return [];
+  }
+
+  const returnType = functionDeclaration.type as ts.TypeReferenceNode;
+  if (returnType.typeName === undefined || returnType.typeName.kind !== ts.SyntaxKind.Identifier) {
+    return [];
+  }
+
+  const identifier = returnType.typeName as ts.Identifier;
+  switch (identifier.text) {
+    case 'ReadonlyArray':
+      return [createInvalidNode(returnType)];
+
+    case 'Promise':
+      if (
+        returnType.typeArguments === undefined ||
+        returnType.typeArguments.length !== 1 ||
+        returnType.typeArguments[0].kind !== ts.SyntaxKind.TypeReference
+      ) {
+        return [];
+      }
+
+      const promiseTypeRef = returnType.typeArguments[0] as ts.TypeReferenceNode;
+      if (promiseTypeRef.typeName.kind !== ts.SyntaxKind.Identifier) {
+        return [];
+      }
+
+      const promiseIdentifier = promiseTypeRef.typeName as ts.Identifier;
+      if (promiseIdentifier.text === 'ReadonlyArray') {
+        return [createInvalidNode(returnType)];
+      }
+
+      return [];
+
+    default:
+      return [];
+  }
 }
