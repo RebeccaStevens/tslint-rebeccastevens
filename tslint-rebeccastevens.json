@@ -6,8 +6,7 @@
     "tslint-consistent-codestyle",
     "tslint-clean-code",
     "tslint-sonarts",
-    "tslint-immutable",
-    "tslint-config-prettier"
+    "tslint-immutable"
   ],
   "rules": {
     /**
