@@ -412,17 +412,38 @@
      */
     "readonly-keyword": [
       true,
-      { "ignore-prefix": ["mutable", "this.mutable"] }
+      {
+        "ignore-prefix": [
+          "mutable",
+          "this.mutable",
+          "_mutable",
+          "this._mutable"
+        ]
+      }
     ],
-    "readonly-array": false, // using `no-array-mutation` instead
+    "readonly-array": false, // using `no-array-mutation` instead.
     "no-let": true,
     "no-array-mutation": [
       true,
-      { "ignore-prefix": ["mutable", "this.mutable"] }
+      {
+        "ignore-prefix": [
+          "mutable",
+          "this.mutable",
+          "_mutable",
+          "this._mutable"
+        ]
+      }
     ],
     "no-object-mutation": [
       true,
-      { "ignore-prefix": ["mutable", "this.mutable"] }
+      {
+        "ignore-prefix": [
+          "mutable",
+          "this.mutable",
+          "_mutable",
+          "this._mutable"
+        ]
+      }
     ],
     "no-delete": true,
     "no-method-signature": true,
