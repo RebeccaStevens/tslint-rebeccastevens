@@ -289,12 +289,7 @@
     "space-within-parens": [true, 0],
     "switch-final-break": [true, "always"],
     "type-literal-delimiter": true,
-    "variable-name": [
-      true,
-      "check-format",
-      "allow-leading-underscore",
-      "ban-keywords"
-    ],
+    "variable-name": false, // using `naming-convention`
     "whitespace": [
       true,
       "check-branch",
