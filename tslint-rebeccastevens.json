@@ -320,67 +320,83 @@
     "early-exit": true,
     "naming-convention": [
       true,
-      // forbid leading and trailing underscores and enforce camelCase on EVERY name. will be overridden by subtypes if needed
+      // Forbid leading and trailing underscores and enforce camelCase on EVERY name.
+      // (Will be overridden by subtypes if needed).
       {
         "type": "default",
         "format": "camelCase",
         "leadingUnderscore": "forbid",
         "trailingUnderscore": "forbid"
       },
-      // require all global constants to be camelCase or UPPER_CASE
-      // all other variables and functions still need to be camelCase
+      // Require all global constants to be camelCase or UPPER_CASE.
       {
         "type": "variable",
         "modifiers": ["global", "const"],
         "format": ["camelCase", "UPPER_CASE"]
       },
-      // override the above format option for exported constants to allow only UPPER_CASE
+      // Exported constants must be UPPER_CASE.
       {
         "type": "variable",
         "modifiers": ["export", "const"],
         "format": "UPPER_CASE"
       },
-      // require exported constant variables that are initialized with functions to be camelCase
+      // Require exported constant variables that are initialized with functions to be camelCase.
       {
         "type": "functionVariable",
         "modifiers": ["export", "const"],
         "format": "camelCase"
       },
-      // allow leading underscores for unused parameters, because `tsc --noUnusedParameters` will not flag underscore prefixed parameters
-      // all other rules (trailingUnderscore: forbid, format: camelCase) still apply
+      // Allow leading underscores for unused parameters (--noUnusedParameters).
       {
         "type": "parameter",
         "modifiers": "unused",
         "leadingUnderscore": "allow"
       },
-      // require leading underscores for private properties and methods, all other rules still apply
+      // Require leading underscores for private properties and methods.
       {
         "type": "member",
         "modifiers": "private",
         "leadingUnderscore": "require"
       },
-      // same for protected
+      // Require leading underscores for protected properties and methods.
       {
         "type": "member",
         "modifiers": "protected",
         "leadingUnderscore": "require"
       },
-      // exclicitly disable the format check only for method toJSON
-      { "type": "method", "filter": "^toJSON$", "format": null },
-      // enforce UPPER_CASE for all public static readonly(!) properties
+      // Exclicitly disable the format check only for method toJSON.
+      {
+        "type": "method",
+        "filter": "^toJSON$",
+        "format": null
+      },
+      // Enforce UPPER_CASE for all public static readonly(!) properties.
       {
         "type": "property",
         "modifiers": ["public", "static", "const"],
         "format": "UPPER_CASE"
       },
-      // enforce PascalCase for classes, interfaces, enums, etc. Remember, there are still no underscores allowed.
-      { "type": "type", "format": "PascalCase" },
-      // abstract classes must have the prefix "Abstract". The following part of the name must be valid PascalCase
-      { "type": "class", "modifiers": "abstract", "prefix": "Abstract" },
-      // interface names must start with "I". The following part of the name must be valid PascalCase
-      { "type": "interface", "prefix": "I" },
-      // enum members must be in PascalCase. Without this config, enumMember would inherit UPPER_CASE from public static const property
-      { "type": "enumMember", "format": "PascalCase" }
+      // Enforce PascalCase for classes, interfaces, enums, etc.
+      {
+        "type": "type",
+        "format": "PascalCase"
+      },
+      // Abstract classes must have the prefix "Abstract". The following part of the name must be valid PascalCase
+      {
+        "type": "class",
+        "modifiers": "abstract",
+        "prefix": "Abstract"
+      },
+      // Interface names must start with "I". The following part of the name must be valid PascalCase
+      {
+        "type": "interface",
+        "prefix": "I"
+      },
+      // Enum members must be in PascalCase.
+      {
+        "type": "enumMember",
+        "format": "PascalCase"
+      }
     ],
     "no-as-type-assertion": false,
     "no-accessor-recursion": true,
