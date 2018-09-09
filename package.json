@@ -1,6 +1,6 @@
 {
   "name": "@rebeccastevens/tslint-rebeccastevens",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "TSLint rules I made for myself.",
   "main": "tslint-rebeccastevens.json",
   "repository": {
