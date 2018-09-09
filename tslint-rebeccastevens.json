@@ -333,11 +333,11 @@
         "modifiers": ["global", "const"],
         "format": ["camelCase", "UPPER_CASE"]
       },
-      // Exported constants must be UPPER_CASE.
+      // Exported constants can be PascalCase, camelCase or UPPER_CASE (as their type cannot be determined i.e. could be initilizes to a class).
       {
         "type": "variable",
         "modifiers": ["export", "const"],
-        "format": "UPPER_CASE"
+        "format": ["PascalCase", "camelCase", "UPPER_CASE"]
       },
       // Require exported constant variables that are initialized with functions to be camelCase.
       {
