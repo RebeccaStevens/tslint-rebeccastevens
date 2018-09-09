@@ -449,6 +449,7 @@
     "export-name": false,
     "function-name": false, // using `naming-convention` instead.
     "import-name": false,
+    "max-func-body-length": false, // using `no-big-function` instead.
     "no-multiline-string": false,
     "no-relative-imports": false,
     "no-suspicious-comment": {
