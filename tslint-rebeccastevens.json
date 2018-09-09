@@ -266,7 +266,7 @@
     "prefer-switch": true,
     "prefer-template": [true, "allow-single-concat"],
     "prefer-while": true,
-    "quotemark": [true, "single"],
+    "quotemark": [true, "single", "jsx-double"],
     "return-undefined": true,
     "semicolon": [true, "always", "strict-bound-class-methods"],
     "space-before-function-paren": [
