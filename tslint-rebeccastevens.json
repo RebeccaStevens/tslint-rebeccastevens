@@ -36,7 +36,7 @@
     "no-any": {
       "severity": "warn"
     },
-    "no-empty-interface": true,
+    "no-empty-interface": false,
     "no-import-side-effect": true,
     "no-inferrable-types": [true, "ignore-params"],
     "no-internal-module": true,
@@ -226,7 +226,7 @@
       }
     ],
     "encoding": true,
-    "file-header": [true, ".+"],
+    "file-header": false,
     "import-spacing": true,
     "interface-name": [true, "always-prefix"],
     "interface-over-type-literal": true,
@@ -309,9 +309,14 @@
     "newspaper-order": true,
 
     /**
+     * SonarTS rules.
+     */
+     "no-nested-template-literals": false,
+
+    /**
      * tslint-consistent-codestyle rules.
      */
-    "early-exit": true,
+    "early-exit": false,
     "naming-convention": [
       true,
       // Forbid leading and trailing underscores and enforce camelCase on EVERY name.
@@ -425,7 +430,8 @@
           "_mutable",
           "this.mutable",
           "this._mutable"
-        ]
+        ],
+        "ignore-mutation-following-accessor": true
       }
     ],
     "no-object-mutation": [
@@ -442,6 +448,8 @@
     "no-delete": false, // using `no-array-mutation` and `no-object-mutation`.
     "no-method-signature": true,
     "no-loop-statement": true,
+    "no-throw": true,
+    "no-try": false, // allow catching exceptions from 3rd party libraries.
 
     /**
      * tslint-microsoft-contrib rules.
@@ -450,6 +458,7 @@
     "function-name": false, // using `naming-convention` instead.
     "import-name": false,
     "max-func-body-length": false, // using `no-big-function` instead.
+    "no-backbone-get-set-outside-model": false, // should only be enabled when using backbone.
     "no-multiline-string": false,
     "no-relative-imports": false,
     "no-suspicious-comment": {
