@@ -10,9 +10,37 @@
 
 ### no-return-readonly-array
 
+[![type-info-badge]][type-info-url]
+
 This rule prevents the type `ReadonlyArray<T>` from being returned from a function. Functions should not rely on their return type being of type `ReadonlyArray<T>` to prevent mutation as 3rd parties can still modify it (by casting it to a standard array). If a function needs to ensure the array it returns is immutable, it should use [`Object.freeze`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze).
 
 Also note that values of type `ReadonlyArray<T>` cannot be provided to something wanting the type `Array<T>`.
+
+#### Options
+
+##### `include-type-arguments`
+
+If set, type arguments will also be checked when evaluating this rule.
+
+*Example:*
+
+```ts
+function(): Promise<ReadonlyArray<number>> {
+  //                ^ Do not return a type containing a ReadonlyArray; use an Array instead.
+}
+```
+
+##### `deep`
+
+If set, the return type will be deeply checked.
+
+*Example:*
+
+```ts
+function test(): { foo: ReadonlyArray<number>; } {
+  //                    ^ Do not return a ReadonlyArray within the result; use an Array instead.
+}
+```
 
 #### Example config
 
@@ -20,9 +48,17 @@ Also note that values of type `ReadonlyArray<T>` cannot be provided to something
 "no-return-readonly-array": true
 ```
 
-[version-badge]: https://img.shields.io/npm/v/@rebeccastevens/tslint-rebeccastevens.svg?style=flat-square
+```json
+"no-return-readonly-array": [true, "include-type-arguments"]
+```
+
+```json
+"no-return-readonly-array": [true, "deep"]
+```
+
+[version-badge]: https://img.shields.io/npm/v/@rebeccastevens/tslint-rebeccastevens.svg?logo=npm&style=flat-square
 [version-url]: https://www.npmjs.com/package/@rebeccastevens/tslint-rebeccastevens
-[travis-badge]: https://travis-ci.com/RebeccaStevens/tslint-rebeccastevens.svg?branch=master
+[travis-badge]: https://img.shields.io/travis/com/RebeccaStevens/tslint-rebeccastevens/master.svg?logo=travis&style=flat-square
 [travis-url]: https://travis-ci.com/RebeccaStevens/tslint-rebeccastevens
 [license-badge]: https://img.shields.io/github/license/RebeccaStevens/tslint-rebeccastevens.svg?style=flat-square
 [license-url]: https://opensource.org/licenses/MIT

@@ -12,7 +12,11 @@
     /**
      * My Rules.
      */
-    "no-return-readonly-array": true,
+    "no-return-readonly-array": [
+      true,
+      "include-type-arguments",
+      "deep"
+    ],
 
     /**
      * Built in rules.
@@ -89,7 +93,7 @@
     "no-conditional-assignment": true,
     "no-console": [
       true,
-      "assert",
+      // "assert",
       "clear",
       "count",
       "debug",
@@ -126,7 +130,7 @@
     "no-invalid-this": true,
     "no-misused-new": true,
     "no-null-keyword": true,
-    "no-object-literal-type-assertion": true,
+    "no-object-literal-type-assertion": false,
     "no-return-await": true,
     "no-shadowed-variable": [
       true,
@@ -306,6 +310,7 @@
      * SonarTS rules.
      */
      "no-nested-template-literals": false,
+     "no-small-switch": false,
 
     /**
      * tslint-consistent-codestyle rules.

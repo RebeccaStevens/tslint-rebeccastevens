@@ -1,0 +1,20 @@
+interface IFoo<T1, T2> {
+  a: T1;
+  b: T2;
+}
+
+async function test(): Promise<ReadonlyArray<number>> {
+                               ~~~~~~~~~~~~~~~~~~~~~ [failure]
+  return Promise.resolve([0, 1, 2]);
+}
+
+function test(): IFoo<ReadonlyArray<number>, ReadonlyArray<number>> {
+                      ~~~~~~~~~~~~~~~~~~~~~ [failure]
+                                             ~~~~~~~~~~~~~~~~~~~~~ [failure]
+  return {
+    a: [0, 1, 2]
+    b: [3, 4, 5]
+  };
+}
+
+[failure]: Do not return a type containing a ReadonlyArray; use an Array instead.

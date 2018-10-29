@@ -1,0 +1,5 @@
+// Don't fail "include-type-arguments"
+
+async function test(): Promise<ReadonlyArray<number>> {
+  return Promise.resolve([0, 1, 2]);
+}

@@ -1,0 +1,144 @@
+type GoodObject = {
+  foo: Array<number>;
+};
+
+type GoodNestedObject = {
+  foo: {
+    bar: Array<number>;
+  };
+};
+
+type GoodTuple = [Array<number>, Array<number>];
+
+type GoodNestedReference = {
+  baz: GoodObject;
+};
+
+type BadObject = {
+  foo: ReadonlyArray<number>;
+};
+
+type BadNestedObject = {
+  foo: {
+    bar: ReadonlyArray<number>;
+  }
+};
+
+type BadTuple = [ReadonlyArray<number>, ReadonlyArray<number>];
+
+type BadNestedReference = {
+  baz: BadObject;
+};
+
+
+function test(): GoodObject {
+  return {
+    foo: [0, 1, 2]
+  };
+}
+
+function test(): { foo: Array<number>; } {
+  return {
+    foo: [0, 1, 2]
+  };
+}
+
+
+function test(): GoodNestedObject {
+  return {
+    foo: {
+      bar: [0, 1, 2]
+    }
+  };
+}
+
+function test(): { foo: { bar: Array<number>; }; } {
+  return {
+    foo: {
+      bar: [0, 1, 2]
+    }
+  };
+
+function test(): GoodTuple {
+  return [
+    [0, 1, 2],
+    [3, 4, 5]
+  ];
+}
+
+function test(): [Array<number>, Array<number>] {
+  return [
+    [0, 1, 2],
+    [3, 4, 5]
+  ];
+}
+
+function test(): GoodNestedReference {
+  return {
+    baz: {
+      foo: [0, 1, 2]
+    }
+  };
+}
+
+
+
+function test(): BadObject {
+                 ~~~~~~~~~ [failure]
+  return {
+    foo: [0, 1, 2]
+  };
+}
+
+function test(): { foo: ReadonlyArray<number>; } {
+                        ~~~~~~~~~~~~~~~~~~~~~ [failure]
+  return {
+    foo: [0, 1, 2]
+  };
+}
+
+
+function test(): BadNestedObject {
+                 ~~~~~~~~~~~~~~~ [failure]
+  return {
+    foo: {
+      bar: [0, 1, 2]
+    }
+  };
+}
+
+function test(): { foo: { bar: ReadonlyArray<number>; }; } {
+                               ~~~~~~~~~~~~~~~~~~~~~ [failure]
+  return {
+    foo: {
+      bar: [0, 1, 2]
+    }
+  };
+
+function test(): BadTuple {
+                 ~~~~~~~~ [failure]
+  return [
+    [0, 1, 2],
+    [3, 4, 5]
+  ];
+}
+
+function test(): [ReadonlyArray<number>, ReadonlyArray<number>] {
+                  ~~~~~~~~~~~~~~~~~~~~~ [failure]
+                                         ~~~~~~~~~~~~~~~~~~~~~ [failure]
+  return [
+    [0, 1, 2],
+    [3, 4, 5]
+  ];
+}
+
+function test(): BadNestedReference {
+                 ~~~~~~~~~~~~~~~~~~ [failure]
+  return {
+    baz: {
+      foo: [0, 1, 2]
+    }
+  };
+}
+
+[failure]: Do not return a ReadonlyArray within the result; use an Array instead.

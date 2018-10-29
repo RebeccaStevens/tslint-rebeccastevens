@@ -22,11 +22,11 @@
     "test": "tslint --test test/rules/**/*"
   },
   "dependencies": {
-    "tslint-clean-code": "^0.2.7",
+    "tslint-clean-code": "^0.2.8",
     "tslint-consistent-codestyle": "^1.13.3",
-    "tslint-immutable": "^4.7.0",
+    "tslint-immutable": "^4.8.0",
     "tslint-microsoft-contrib": "^5.2.1",
-    "tslint-sonarts": "^1.7.0"
+    "tslint-sonarts": "^1.8.0"
   },
   "devDependencies": {
     "tslint": "^5.11.0",

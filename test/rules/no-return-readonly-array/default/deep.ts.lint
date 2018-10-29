@@ -1,0 +1,63 @@
+// Don't fail "deep"
+
+type BadObject = {
+  foo: ReadonlyArray<number>;
+};
+
+type BadNestedObject = {
+  foo: {
+    bar: ReadonlyArray<number>;
+  }
+};
+
+type BadTuple = [ReadonlyArray<number>, ReadonlyArray<number>];
+
+function test(): BadObject {
+  return {
+    foo: [0, 1, 2]
+  };
+}
+
+function test(): { foo: ReadonlyArray<number>; } {
+  return {
+    foo: [0, 1, 2]
+  };
+}
+
+
+function test(): BadNestedObject {
+  return {
+    foo: {
+      bar: [0, 1, 2]
+    }
+  };
+}
+
+function test(): { foo: { bar: ReadonlyArray<number>; }; } {
+  return {
+    foo: {
+      bar: [0, 1, 2]
+    }
+  };
+
+function test(): BadTuple {
+  return [
+    [0, 1, 2],
+    [3, 4, 5]
+  ];
+}
+
+function test(): [ReadonlyArray<number>, ReadonlyArray<number>] {
+  return [
+    [0, 1, 2],
+    [3, 4, 5]
+  ];
+}
+
+function test(): BadNestedReference {
+  return {
+    baz: {
+      foo: [0, 1, 2]
+    }
+  };
+}

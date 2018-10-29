@@ -1,7 +1,6 @@
 /**
  * Helper funcation and types for creating tslint rules.
  */
-// tslint:disable:no-object-literal-type-assertion
 
 import * as Lint from 'tslint';
 import * as ts from 'typescript';
@@ -25,6 +24,7 @@ export interface IRuleFunctionResult {
 
 export interface IInvalidNode {
   readonly node: ts.Node;
+  readonly failureMessage: string;
   readonly replacements: Array<Lint.Replacement>;
 }
 
@@ -42,7 +42,6 @@ interface IRuleOptions {
 
 export function createNodeRule<TOptions extends IRuleOptions>(
   ruleFunction: NodeRuleFunction<TOptions>,
-  failureString: string,
   doParseOptions: ParseOptionsFunction<TOptions> = parseOptions
 ): any {
   return class Rule extends Lint.Rules.AbstractRule {
@@ -50,7 +49,7 @@ export function createNodeRule<TOptions extends IRuleOptions>(
       return this.applyWithFunction(
         sourceFile,
         (ctx: Lint.WalkContext<TOptions>) =>
-          walk(ctx, ruleFunction, failureString),
+          walk(ctx, ruleFunction),
         doParseOptions(this.ruleArguments)
       );
     }
@@ -59,7 +58,6 @@ export function createNodeRule<TOptions extends IRuleOptions>(
 
 export function createNodeTypedRule<TOptions extends IRuleOptions>(
   ruleFunction: TypedNodeRuleFunction<TOptions>,
-  failureString: string,
   doParseOptions: ParseOptionsFunction<TOptions> = parseOptions
 ): any {
   return class Rule extends Lint.Rules.TypedRule {
@@ -70,7 +68,7 @@ export function createNodeTypedRule<TOptions extends IRuleOptions>(
       return this.applyWithFunction(
         sourceFile,
         (ctx: Lint.WalkContext<TOptions>, checker: ts.TypeChecker) =>
-          walk(ctx, ruleFunction, failureString, checker),
+          walk(ctx, ruleFunction, checker),
         doParseOptions(this.ruleArguments),
         program.getTypeChecker()
       );
@@ -81,7 +79,6 @@ export function createNodeTypedRule<TOptions extends IRuleOptions>(
 function walk<TOptions>(
   ctx: Lint.WalkContext<TOptions>,
   ruleFunction: NodeRuleFunction<TOptions>,
-  failureString: string,
   checker?: ts.TypeChecker
 ): void {
   const cb = (node: ts.Node): void => {
@@ -89,7 +86,7 @@ function walk<TOptions>(
       checker === undefined
         ? (ruleFunction as UntypedNodeRuleFunction<TOptions>)(node, ctx)
         : (ruleFunction as TypedNodeRuleFunction<TOptions>)(node, ctx, checker);
-    reportInvalidNodes(invalidNodes, ctx, failureString);
+    reportInvalidNodes(invalidNodes, ctx);
 
     if (skipChildren === true) {
       return;
@@ -103,13 +100,12 @@ function walk<TOptions>(
 
 function reportInvalidNodes<TOptions>(
   invalidNodes: ReadonlyArray<IInvalidNode>,
-  ctx: Lint.WalkContext<TOptions>,
-  failureString: string
+  ctx: Lint.WalkContext<TOptions>
 ): void {
   invalidNodes.forEach((invalidNode) =>
     ctx.addFailureAtNode(
       invalidNode.node,
-      failureString,
+      invalidNode.failureMessage,
       invalidNode.replacements
     )
   );
@@ -176,7 +172,8 @@ function upFirstCharacter(word: string): string {
 
 export function createInvalidNode(
   node: ts.Node,
+  failureMessage: string,
   replacements: Array<Lint.Replacement> = []
 ): IInvalidNode {
-  return { node, replacements };
+  return { node, failureMessage, replacements };
 }

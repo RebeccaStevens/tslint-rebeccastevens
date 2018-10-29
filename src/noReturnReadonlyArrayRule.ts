@@ -5,75 +5,382 @@
  *
  * If a function needs to ensure the array it returns is immutable, it should use Object.freeze().
  *
- * Also note that values of type `ReadonlyArray<T>` cannot be provided to something wanting the type `Array<T>`.
+ * Also note that values of type `ReadonlyArray<T>` cannot be provided to a function wanting the type `Array<T>`.
  */
 
+import * as Lint from 'tslint';
 import * as ts from 'typescript';
 
 import {
   createInvalidNode,
-  createNodeRule,
+  createNodeTypedRule,
   IInvalidNode,
   IRuleFunctionResult
 } from './common/nodeRuleHelpers';
+import * as Options from './common/options';
+
+type RuleOptions =
+  Options.IDeep &
+  Options.IIncludeTypeArguments;
 
 // tslint:disable-next-line:naming-convention
-export const Rule = createNodeRule(
-  ruleFunction,
-  'Do not return a ReadonlyArray; return an Array instead.'
-);
+export const Rule = createNodeTypedRule(ruleFunction);
+
+const failureMessageDefault = 'Do not return a ReadonlyArray; return an Array instead.';
+const failureMessageType = 'Do not return a type containing a ReadonlyArray; use an Array instead.';
+const failureMessageDeep = 'Do not return a ReadonlyArray within the result; use an Array instead.';
 
 function ruleFunction(
-  node: ts.Node
+  node: ts.Node,
+  ctx: Lint.WalkContext<RuleOptions>,
+  checker: ts.TypeChecker
 ): IRuleFunctionResult {
-  return { invalidNodes: getInvalidNodes(node) };
+  return { invalidNodes: getInvalidNodes(node, ctx, checker) };
 }
 
 /**
  * Does the given node vialate this rule?
+ *
+ * If not return the nodes that are invalid (can be subnodes of the given node).
  */
-function getInvalidNodes(node: ts.Node): Array<IInvalidNode> {
-  if (node.kind !== ts.SyntaxKind.FunctionDeclaration) {
+function getInvalidNodes(
+  node: ts.Node,
+  ctx: Lint.WalkContext<RuleOptions>,
+  checker: ts.TypeChecker
+): Array<IInvalidNode> {
+  if (
+    node.kind !== ts.SyntaxKind.FunctionDeclaration &&
+    node.kind !== ts.SyntaxKind.FunctionExpression &&
+    node.kind !== ts.SyntaxKind.ArrowFunction
+  ) {
     return [];
   }
 
-  const functionDeclaration = node as ts.FunctionDeclaration;
-  if (functionDeclaration.type === undefined) {
+  const func = node as ts.FunctionDeclaration | ts.FunctionExpression | ts.ArrowFunction;
+  if (func.type === undefined) {
     return [];
   }
 
-  const returnType = functionDeclaration.type as ts.TypeReferenceNode;
-  if (returnType.typeName === undefined || returnType.typeName.kind !== ts.SyntaxKind.Identifier) {
+  if (func.type.kind === ts.SyntaxKind.TypeReference) {
+    const invalidTypeReferenceNodes = getInvalidTypeReferenceNodes(
+        func.type as ts.TypeReferenceNode,
+        ctx,
+        checker,
+        failureMessageDefault
+      );
+
+    if (invalidTypeReferenceNodes.length > 0) {
+      return invalidTypeReferenceNodes;
+    }
+  }
+
+  if (Boolean(ctx.options.deep)) {
+    if (func.type.kind === ts.SyntaxKind.TypeLiteral) {
+      const invalidTypeLiteralNodes = getInvalidTypeLiteralNodes(
+        func.type as ts.TypeLiteralNode,
+        ctx,
+        checker
+      );
+
+      if (invalidTypeLiteralNodes.length > 0) {
+        return invalidTypeLiteralNodes;
+      }
+    }
+
+    if (func.type.kind === ts.SyntaxKind.TupleType) {
+      const invalidTupleTypeNodes = getInvalidTupleTypeNodes(
+        func.type as ts.TupleTypeNode,
+        ctx,
+        checker
+      );
+
+      if (invalidTupleTypeNodes.length > 0) {
+        return invalidTupleTypeNodes;
+      }
+    }
+  }
+
+  return [];
+}
+
+function getInvalidPropertySignatureNodes(
+  propertySignature: ts.PropertySignature,
+  ctx: Lint.WalkContext<RuleOptions>,
+  checker: ts.TypeChecker,
+  nodeToMark?: ts.Node
+): Array<IInvalidNode> {
+  if (propertySignature.type === undefined) {
     return [];
   }
 
-  const identifier = returnType.typeName as ts.Identifier;
-  switch (identifier.text) {
-    case 'ReadonlyArray':
-      return [createInvalidNode(returnType)];
+  switch (propertySignature.type.kind) {
+    case ts.SyntaxKind.TypeReference:
+      return getInvalidTypeReferenceNodes(
+        propertySignature.type as ts.TypeReferenceNode,
+        ctx,
+        checker,
+        failureMessageDeep,
+        nodeToMark
+      );
 
-    case 'Promise':
-      if (
-        returnType.typeArguments === undefined ||
-        returnType.typeArguments.length !== 1 ||
-        returnType.typeArguments[0].kind !== ts.SyntaxKind.TypeReference
-      ) {
-        return [];
-      }
+    case ts.SyntaxKind.TypeLiteral:
+      return getInvalidTypeLiteralNodes(
+        propertySignature.type as ts.TypeLiteralNode,
+        ctx,
+        checker,
+        nodeToMark
+      );
 
-      const promiseTypeRef = returnType.typeArguments[0] as ts.TypeReferenceNode;
-      if (promiseTypeRef.typeName.kind !== ts.SyntaxKind.Identifier) {
-        return [];
-      }
-
-      const promiseIdentifier = promiseTypeRef.typeName as ts.Identifier;
-      if (promiseIdentifier.text === 'ReadonlyArray') {
-        return [createInvalidNode(returnType)];
-      }
-
-      return [];
+    case ts.SyntaxKind.TupleType:
+      return getInvalidTupleTypeNodes(
+        propertySignature.type as ts.TupleTypeNode,
+        ctx,
+        checker,
+        nodeToMark
+      );
 
     default:
       return [];
   }
+}
+
+function getInvalidTupleTypeNodes(
+  tuple: ts.TupleTypeNode,
+  ctx: Lint.WalkContext<RuleOptions>,
+  checker: ts.TypeChecker,
+  nodeToMark?: ts.Node
+): Array<IInvalidNode> {
+  const mutableIds: any = {};
+
+  return (
+    ([] as Array<IInvalidNode>).concat(
+      ...tuple.elementTypes.map((element) => {
+        switch (element.kind) {
+          case ts.SyntaxKind.TypeReference:
+            return getInvalidTypeReferenceNodes(
+              element as ts.TypeReferenceNode,
+              ctx,
+              checker,
+              failureMessageDeep,
+              nodeToMark
+            );
+
+          case ts.SyntaxKind.TypeLiteral:
+            return getInvalidTypeLiteralNodes(
+              element as ts.TypeLiteralNode,
+              ctx,
+              checker,
+              nodeToMark
+            );
+
+          case ts.SyntaxKind.TupleType:
+            return getInvalidTupleTypeNodes(
+              element as ts.TupleTypeNode,
+              ctx,
+              checker,
+              nodeToMark
+            );
+
+          default:
+            return [];
+        }
+      })
+    )
+    // TODO: remove the need for this.
+    // Filter out duplicates.
+    .filter((item) => {
+      const id = item.node.pos;
+      if (mutableIds[id]) {
+        return false;
+      }
+      mutableIds[id] = true;
+      return true;
+    })
+  );
+}
+
+function getInvalidTypeReferenceNodes(
+  typeReference: ts.TypeReferenceNode,
+  ctx: Lint.WalkContext<RuleOptions>,
+  checker: ts.TypeChecker,
+  failureMessage: string,
+  nodeToMark?: ts.Node
+): Array<IInvalidNode> {
+  if (typeReference.typeName !== undefined && typeReference.typeName.kind === ts.SyntaxKind.Identifier) {
+    const typeReferenceName = typeReference.typeName as ts.Identifier;
+
+    if (typeReferenceName.text === 'ReadonlyArray') {
+      return [
+        createInvalidNode(
+          nodeToMark === undefined
+          ? typeReference
+          : nodeToMark,
+          failureMessage
+        )
+      ];
+    }
+
+    if (Boolean(ctx.options.includeTypeArguments)) {
+      const invalidTypeArgumentNodes = getInvalidTypeArgumentNodes(
+        typeReference,
+        checker,
+        failureMessageType,
+        nodeToMark
+      );
+
+      if (invalidTypeArgumentNodes.length > 0) {
+        return invalidTypeArgumentNodes;
+      }
+    }
+
+    return getInvalidTypeReferenceNodesWithTypeChecking(
+      typeReference,
+      ctx,
+      checker,
+      nodeToMark
+    );
+  }
+
+  return [];
+}
+
+function getInvalidTypeReferenceNodesWithTypeChecking(
+  typeReference: ts.TypeReferenceNode,
+  ctx: Lint.WalkContext<RuleOptions>,
+  checker: ts.TypeChecker,
+  nodeToMark?: ts.Node
+): Array<IInvalidNode> {
+  if (!Boolean(ctx.options.deep)) {
+    return [];
+  }
+
+  const typeReferenceType = checker.getTypeFromTypeNode(typeReference);
+
+  if (typeReferenceType.aliasSymbol !== undefined) {
+    return (
+      ([] as Array<IInvalidNode>).concat(
+        ...typeReferenceType.aliasSymbol.declarations.map((declaration) => {
+          if (declaration.kind === ts.SyntaxKind.TypeAliasDeclaration) {
+            const typeAliasDeclaration = declaration as ts.TypeAliasDeclaration;
+
+            switch (typeAliasDeclaration.type.kind) {
+              case ts.SyntaxKind.TypeLiteral:
+                return getInvalidTypeLiteralNodes(
+                  typeAliasDeclaration.type as ts.TypeLiteralNode,
+                  ctx,
+                  checker,
+                  nodeToMark === undefined
+                  ? typeReference
+                  : nodeToMark
+                );
+
+              default:
+                return [];
+            }
+          }
+          return [];
+        })
+      )
+    );
+  }
+
+  const typeReferenceTypeNode = checker.typeToTypeNode(typeReferenceType);
+
+  if (typeReferenceTypeNode !== undefined) {
+    switch (typeReferenceTypeNode.kind) {
+      case ts.SyntaxKind.TupleType:
+        return getInvalidTupleTypeNodes(
+          typeReferenceTypeNode as ts.TupleTypeNode,
+          ctx,
+          checker,
+          nodeToMark === undefined
+          ? typeReference
+          : nodeToMark
+        );
+
+      default:
+        return [];
+    }
+  }
+
+  return [];
+}
+
+function getInvalidTypeLiteralNodes(
+  typeLiteral: ts.TypeLiteralNode,
+  ctx: Lint.WalkContext<RuleOptions>,
+  checker: ts.TypeChecker,
+  nodeToMark?: ts.Node
+): Array<IInvalidNode> {
+  return (
+    ([] as Array<IInvalidNode>).concat(
+      ...typeLiteral.members.map((member) => {
+        switch (member.kind) {
+          case ts.SyntaxKind.PropertySignature:
+            return getInvalidPropertySignatureNodes(
+              member as ts.PropertySignature,
+              ctx,
+              checker,
+              nodeToMark
+            );
+
+          default:
+            return [];
+        }
+      })
+    )
+  );
+}
+
+/**
+ * Get the invalid nodes within the given type reference.
+ */
+function getInvalidTypeArgumentNodes(
+  typeReference: ts.TypeReferenceNode,
+  checker: ts.TypeChecker,
+  failureMessage: string,
+  nodeToMark?: ts.Node
+): Array<IInvalidNode> {
+  if (typeReference.typeArguments === undefined) {
+    return [];
+  }
+
+  return (
+    ([] as Array<IInvalidNode>).concat(
+      ...typeReference.typeArguments.map((argument) => {
+        if (argument.kind !== ts.SyntaxKind.TypeReference) {
+          return [];
+        }
+
+        const typeReferenceArgument = argument as ts.TypeReferenceNode;
+
+        if (
+          typeReferenceArgument.typeName.kind === ts.SyntaxKind.Identifier &&
+          typeReferenceArgument.typeName.text === 'ReadonlyArray'
+        ) {
+          return [
+            createInvalidNode(
+              nodeToMark === undefined
+              ? typeReferenceArgument
+              : nodeToMark,
+              failureMessage
+            ),
+            ...getInvalidTypeArgumentNodes(
+              typeReferenceArgument,
+              checker,
+              failureMessage,
+              nodeToMark
+            )
+          ];
+        }
+
+        return getInvalidTypeArgumentNodes(
+          typeReferenceArgument,
+          checker,
+          failureMessage,
+          nodeToMark
+        );
+      })
+    )
+  );
 }
