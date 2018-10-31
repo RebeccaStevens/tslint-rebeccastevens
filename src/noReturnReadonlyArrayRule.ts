@@ -12,31 +12,35 @@ import * as Lint from 'tslint';
 import * as ts from 'typescript';
 
 import {
-  createInvalidNode,
   createNodeTypedRule,
   IInvalidNode,
-  IRuleFunctionResult
+  markAsInvalidNode,
+  TsSyntaxFunction,
+  TsSyntaxFunctionTyped
 } from './common/nodeRuleHelpers';
 import * as Options from './common/options';
 
 type RuleOptions =
-  Options.IDeep &
-  Options.IIncludeTypeArguments;
+  & Options.IDeep
+  & Options.IIncludeTypeArguments;
 
-// tslint:disable-next-line:naming-convention
-export const Rule = createNodeTypedRule(ruleFunction);
+const failureMessageDefault =
+  'Do not return a ReadonlyArray; return an Array instead.';
 
-const failureMessageDefault = 'Do not return a ReadonlyArray; return an Array instead.';
-const failureMessageType = 'Do not return a type containing a ReadonlyArray; use an Array instead.';
-const failureMessageDeep = 'Do not return a ReadonlyArray within the result; use an Array instead.';
+const failureMessageType =
+  'Do not return a type containing a ReadonlyArray; use an Array instead.';
 
-function ruleFunction(
-  node: ts.Node,
-  ctx: Lint.WalkContext<RuleOptions>,
-  checker: ts.TypeChecker
-): IRuleFunctionResult {
-  return { invalidNodes: getInvalidNodes(node, ctx, checker) };
-}
+const failureMessageDeep =
+  'Do not return a ReadonlyArray within the result; use an Array instead.';
+
+/**
+ * The `no-return-readonly-array-rule`.
+ */
+export const Rule = createNodeTypedRule<RuleOptions>(
+  (node, ctx, checker) => ({
+    invalidNodes: getInvalidNodes(node, ctx, checker)
+  })
+);
 
 /**
  * Does the given node vialate this rule?
@@ -48,22 +52,24 @@ function getInvalidNodes(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker
 ): Array<IInvalidNode> {
-  if (
-    node.kind !== ts.SyntaxKind.FunctionDeclaration &&
-    node.kind !== ts.SyntaxKind.FunctionExpression &&
-    node.kind !== ts.SyntaxKind.ArrowFunction
-  ) {
+  if (!(
+    node.kind === ts.SyntaxKind.FunctionDeclaration ||
+    node.kind === ts.SyntaxKind.FunctionExpression ||
+    node.kind === ts.SyntaxKind.ArrowFunction
+  )) {
     return [];
   }
+  const func = node as TsSyntaxFunction;
 
-  const func = node as ts.FunctionDeclaration | ts.FunctionExpression | ts.ArrowFunction;
   if (func.type === undefined) {
     return [];
   }
+  const typedFunction = func as TsSyntaxFunctionTyped;
 
-  if (func.type.kind === ts.SyntaxKind.TypeReference) {
-    const invalidTypeReferenceNodes = getInvalidTypeReferenceNodes(
-        func.type as ts.TypeReferenceNode,
+  if (typedFunction.type.kind === ts.SyntaxKind.TypeReference) {
+    const invalidTypeReferenceNodes =
+      getInvalidTypeReferenceNodes(
+        typedFunction.type as ts.TypeReferenceNode,
         ctx,
         checker,
         failureMessageDefault
@@ -75,34 +81,56 @@ function getInvalidNodes(
   }
 
   if (Boolean(ctx.options.deep)) {
-    if (func.type.kind === ts.SyntaxKind.TypeLiteral) {
-      const invalidTypeLiteralNodes = getInvalidTypeLiteralNodes(
-        func.type as ts.TypeLiteralNode,
-        ctx,
-        checker
-      );
+    const deepInvalidNodes =
+      getDeepInvalidNodes(node, ctx, checker, typedFunction);
 
-      if (invalidTypeLiteralNodes.length > 0) {
-        return invalidTypeLiteralNodes;
-      }
-    }
-
-    if (func.type.kind === ts.SyntaxKind.TupleType) {
-      const invalidTupleTypeNodes = getInvalidTupleTypeNodes(
-        func.type as ts.TupleTypeNode,
-        ctx,
-        checker
-      );
-
-      if (invalidTupleTypeNodes.length > 0) {
-        return invalidTupleTypeNodes;
-      }
+    if (deepInvalidNodes.length > 0) {
+      return deepInvalidNodes;
     }
   }
 
   return [];
 }
 
+/**
+ * Does one of the given node's child nodes invalidate this rule?
+ */
+function getDeepInvalidNodes(
+  _node: ts.Node,
+  ctx: Lint.WalkContext<RuleOptions>,
+  checker: ts.TypeChecker,
+  typedFunction: TsSyntaxFunctionTyped
+): Array<IInvalidNode> {
+  if (typedFunction.type.kind === ts.SyntaxKind.TypeLiteral) {
+    const invalidTypeLiteralNodes = getInvalidTypeLiteralNodes(
+      typedFunction.type as ts.TypeLiteralNode,
+      ctx,
+      checker
+    );
+
+    if (invalidTypeLiteralNodes.length > 0) {
+      return invalidTypeLiteralNodes;
+    }
+  }
+
+  if (typedFunction.type.kind === ts.SyntaxKind.TupleType) {
+    const invalidTupleTypeNodes = getInvalidTupleTypeNodes(
+      typedFunction.type as ts.TupleTypeNode,
+      ctx,
+      checker
+    );
+
+    if (invalidTupleTypeNodes.length > 0) {
+      return invalidTupleTypeNodes;
+    }
+  }
+
+  return [];
+}
+
+/**
+ * Does the given property signature vialate this rule?
+ */
 function getInvalidPropertySignatureNodes(
   propertySignature: ts.PropertySignature,
   ctx: Lint.WalkContext<RuleOptions>,
@@ -144,12 +172,16 @@ function getInvalidPropertySignatureNodes(
   }
 }
 
+/**
+ * Does the given tuple vialate this rule?
+ */
 function getInvalidTupleTypeNodes(
   tuple: ts.TupleTypeNode,
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   nodeToMark?: ts.Node
 ): Array<IInvalidNode> {
+  // tslint:disable-next-line:no-any
   const mutableIds: any = {};
 
   return (
@@ -193,16 +225,21 @@ function getInvalidTupleTypeNodes(
     )
     // Filter out duplicates.
     .filter((item) => {
+      // tslint:disable:no-unsafe-any
       const id = item.node.pos;
       if (mutableIds[id]) {
         return false;
       }
       mutableIds[id] = true;
       return true;
+      // tslint:enable:no-unsafe-any
     })
   );
 }
 
+/**
+ * Does the given type reference vialate this rule?
+ */
 function getInvalidTypeReferenceNodes(
   typeReference: ts.TypeReferenceNode,
   ctx: Lint.WalkContext<RuleOptions>,
@@ -210,12 +247,10 @@ function getInvalidTypeReferenceNodes(
   failureMessage: string,
   nodeToMark?: ts.Node
 ): Array<IInvalidNode> {
-  if (typeReference.typeName !== undefined && typeReference.typeName.kind === ts.SyntaxKind.Identifier) {
-    const typeReferenceName = typeReference.typeName as ts.Identifier;
-
-    if (typeReferenceName.text === 'ReadonlyArray') {
+  if (typeReference.typeName.kind === ts.SyntaxKind.Identifier) {
+    if (typeReference.typeName.text === 'ReadonlyArray') {
       return [
-        createInvalidNode(
+        markAsInvalidNode(
           nodeToMark === undefined
           ? typeReference
           : nodeToMark,
@@ -248,6 +283,10 @@ function getInvalidTypeReferenceNodes(
   return [];
 }
 
+/**
+ * Does the given type reference vialate this rule?
+ * (uses typechecking)
+ */
 function getInvalidTypeReferenceNodesWithTypeChecking(
   typeReference: ts.TypeReferenceNode,
   ctx: Lint.WalkContext<RuleOptions>,
@@ -260,38 +299,69 @@ function getInvalidTypeReferenceNodesWithTypeChecking(
 
   const typeReferenceType = checker.getTypeFromTypeNode(typeReference);
 
-  if (typeReferenceType.aliasSymbol !== undefined) {
-    return (
-      ([] as Array<IInvalidNode>).concat(
-        ...typeReferenceType.aliasSymbol.declarations.map((declaration) => {
-          if (declaration.kind === ts.SyntaxKind.TypeAliasDeclaration) {
-            const typeAliasDeclaration = declaration as ts.TypeAliasDeclaration;
-
-            switch (typeAliasDeclaration.type.kind) {
-              case ts.SyntaxKind.TypeLiteral:
-                return getInvalidTypeLiteralNodes(
-                  typeAliasDeclaration.type as ts.TypeLiteralNode,
-                  ctx,
-                  checker,
-                  nodeToMark === undefined
-                  ? typeReference
-                  : nodeToMark
-                );
-
-              default:
-                return [];
-            }
-          }
-          return [];
-        })
-      )
+  const invalidTypeReferenceNodesUsingNodeType =
+    getInvalidTypeReferenceNodesUsingNodeType(
+      typeReference,
+      typeReferenceType,
+      ctx,
+      checker,
+      nodeToMark
     );
+  if (invalidTypeReferenceNodesUsingNodeType.length > 0) {
+    return invalidTypeReferenceNodesUsingNodeType;
   }
 
+  const invalidTypeReferenceNodesUsingTypeAlias =
+    getInvalidTypeReferenceNodesUsingTypeAlias(
+      typeReference,
+      typeReferenceType,
+      ctx,
+      checker,
+      nodeToMark
+    );
+  if (invalidTypeReferenceNodesUsingTypeAlias.length > 0) {
+    return invalidTypeReferenceNodesUsingTypeAlias;
+  }
+
+  return [];
+}
+
+/**
+ * Does the given type reference vialate this rule?
+ * Checks against the node type.
+ */
+function getInvalidTypeReferenceNodesUsingNodeType(
+  typeReference: ts.TypeReferenceNode,
+  typeReferenceType: ts.Type,
+  ctx: Lint.WalkContext<RuleOptions>,
+  checker: ts.TypeChecker,
+  nodeToMark?: ts.Node
+): Array<IInvalidNode> {
   const typeReferenceTypeNode = checker.typeToTypeNode(typeReferenceType);
 
   if (typeReferenceTypeNode !== undefined) {
     switch (typeReferenceTypeNode.kind) {
+      case ts.SyntaxKind.TypeReference:
+        return getInvalidTypeReferenceNodes(
+          typeReferenceTypeNode as ts.TypeReferenceNode,
+          ctx,
+          checker,
+          failureMessageDeep,
+          nodeToMark === undefined
+          ? typeReference
+          : nodeToMark
+        );
+
+      case ts.SyntaxKind.TypeLiteral:
+        return getInvalidTypeLiteralNodes(
+          typeReferenceTypeNode as ts.TypeLiteralNode,
+          ctx,
+          checker,
+          nodeToMark === undefined
+          ? typeReference
+          : nodeToMark
+        );
+
       case ts.SyntaxKind.TupleType:
         return getInvalidTupleTypeNodes(
           typeReferenceTypeNode as ts.TupleTypeNode,
@@ -310,6 +380,49 @@ function getInvalidTypeReferenceNodesWithTypeChecking(
   return [];
 }
 
+/**
+ * Does the given type reference vialate this rule?
+ * Checks against the type alias.
+ */
+function getInvalidTypeReferenceNodesUsingTypeAlias(
+  typeReference: ts.TypeReferenceNode,
+  typeReferenceType: ts.Type,
+  ctx: Lint.WalkContext<RuleOptions>,
+  checker: ts.TypeChecker,
+  nodeToMark?: ts.Node
+): Array<IInvalidNode> {
+  if (typeReferenceType.aliasSymbol !== undefined) {
+    return ([] as Array<IInvalidNode>).concat(
+      ...typeReferenceType.aliasSymbol.declarations.map((declaration) => {
+        if (declaration.kind === ts.SyntaxKind.TypeAliasDeclaration) {
+          const typeAliasDeclaration = declaration as ts.TypeAliasDeclaration;
+
+          switch (typeAliasDeclaration.type.kind) {
+            case ts.SyntaxKind.TypeLiteral:
+              return getInvalidTypeLiteralNodes(
+                typeAliasDeclaration.type as ts.TypeLiteralNode,
+                ctx,
+                checker,
+                nodeToMark === undefined
+                ? typeReference
+                : nodeToMark
+              );
+
+            default:
+              return [];
+          }
+        }
+        return [];
+      })
+    );
+  }
+
+  return [];
+}
+
+/**
+ * Does the given type literal vialate this rule?
+ */
 function getInvalidTypeLiteralNodes(
   typeLiteral: ts.TypeLiteralNode,
   ctx: Lint.WalkContext<RuleOptions>,
@@ -363,7 +476,7 @@ function getInvalidTypeArgumentNodes(
           typeReferenceArgument.typeName.text === 'ReadonlyArray'
         ) {
           return [
-            createInvalidNode(
+            markAsInvalidNode(
               nodeToMark === undefined
               ? typeReferenceArgument
               : nodeToMark,

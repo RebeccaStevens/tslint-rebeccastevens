@@ -9,13 +9,16 @@ type NodeRuleFunction<TOptions> =
   | UntypedNodeRuleFunction<TOptions>
   | TypedNodeRuleFunction<TOptions>;
 
-export type UntypedNodeRuleFunction<TOptions> = (node: ts.Node, ctx: Lint.WalkContext<TOptions>) => IRuleFunctionResult;
+export type UntypedNodeRuleFunction<TOptions> = (
+  node: ts.Node,
+  ctx: Lint.WalkContext<TOptions>
+) => IRuleFunctionResult;
 
 export type TypedNodeRuleFunction<TOptions> = (
-    node: ts.Node,
-    ctx: Lint.WalkContext<TOptions>,
-    checker: ts.TypeChecker
-  ) => IRuleFunctionResult;
+  node: ts.Node,
+  ctx: Lint.WalkContext<TOptions>,
+  checker: ts.TypeChecker
+) => IRuleFunctionResult;
 
 export interface IRuleFunctionResult {
   readonly invalidNodes: ReadonlyArray<IInvalidNode>;
@@ -28,47 +31,79 @@ export interface IInvalidNode {
   readonly replacements: Array<Lint.Replacement>;
 }
 
-type ParseOptionsFunction<TOptions> = (ruleArguments: Array<RuleArgument>) => TOptions;
+type ParseOptionsFunction<TOptions> = (
+  ruleArguments: Array<RuleArgument>
+) => TOptions;
 
 type RuleArgument =
-  string
+  | string
   | {
-    readonly [key: string]: string | Array<string>;
-  };
+      readonly [key: string]: string | Array<string>;
+    };
 
 interface IRuleOptions {
-  readonly [key: string]: string | Array<string>;
+  // readonly [key: string]: (string | Array<string>);
 }
 
+export type TsSyntaxFunction =
+  | ts.FunctionDeclaration
+  | ts.FunctionExpression
+  | ts.ArrowFunction;
+
+export type TsSyntaxFunctionTyped =
+  TsSyntaxFunction
+  & {
+    // tslint:disable-next-line:no-reserved-keywords
+    readonly type: ts.TypeNode;
+  };
+
+/**
+ * Create a Rule class from a rule function.
+ */
 export function createNodeRule<TOptions extends IRuleOptions>(
   ruleFunction: NodeRuleFunction<TOptions>,
   doParseOptions: ParseOptionsFunction<TOptions> = parseOptions
-): any {
+): { new (): Lint.Rules.AbstractRule } {
+  // @ts-ignore
   return class Rule extends Lint.Rules.AbstractRule {
+
+    /**
+     * Apply this rule.
+     */
     public apply(sourceFile: ts.SourceFile): Array<Lint.RuleFailure> {
       return this.applyWithFunction(
         sourceFile,
-        (ctx: Lint.WalkContext<TOptions>) =>
-          walk(ctx, ruleFunction),
+        (ctx) => {
+          walk(ctx, ruleFunction);
+        },
         doParseOptions(this.ruleArguments)
       );
     }
   };
 }
 
+/**
+ * Create a Rule class from a rule function that uses type information.
+ */
 export function createNodeTypedRule<TOptions extends IRuleOptions>(
   ruleFunction: TypedNodeRuleFunction<TOptions>,
   doParseOptions: ParseOptionsFunction<TOptions> = parseOptions
-): any {
+): { new (): Lint.Rules.TypedRule } {
+  // @ts-ignore
   return class Rule extends Lint.Rules.TypedRule {
+
+    /**
+     * Apply this rule.
+     */
     public applyWithProgram(
       sourceFile: ts.SourceFile,
       program: ts.Program
     ): Array<Lint.RuleFailure> {
       return this.applyWithFunction(
         sourceFile,
-        (ctx: Lint.WalkContext<TOptions>, checker: ts.TypeChecker) =>
-          walk(ctx, ruleFunction, checker),
+        (ctx, checker: ts.TypeChecker) => {
+          walk(ctx, ruleFunction, checker);
+        },
         doParseOptions(this.ruleArguments),
         program.getTypeChecker()
       );
@@ -76,6 +111,9 @@ export function createNodeTypedRule<TOptions extends IRuleOptions>(
   };
 }
 
+/**
+ * Walk the AST.
+ */
 function walk<TOptions>(
   ctx: Lint.WalkContext<TOptions>,
   ruleFunction: NodeRuleFunction<TOptions>,
@@ -98,17 +136,20 @@ function walk<TOptions>(
   return ts.forEachChild(ctx.sourceFile, cb);
 }
 
+/**
+ * Report the invalid nodes.
+ */
 function reportInvalidNodes<TOptions>(
   invalidNodes: ReadonlyArray<IInvalidNode>,
   ctx: Lint.WalkContext<TOptions>
 ): void {
-  invalidNodes.forEach((invalidNode) =>
+  invalidNodes.forEach((invalidNode) => {
     ctx.addFailureAtNode(
       invalidNode.node,
       invalidNode.failureMessage,
       invalidNode.replacements
-    )
-  );
+    );
+  });
 }
 
 /**
@@ -120,8 +161,8 @@ function reportInvalidNodes<TOptions>(
 export function parseOptions<TOptions extends IRuleOptions>(
   ruleArguments: Array<RuleArgument>
 ): TOptions {
-  return (
-    ruleArguments.reduce<TOptions>((options, arg) => {
+  return ruleArguments.reduce<TOptions>(
+    (options, arg) => {
       switch (typeof arg) {
         case 'string':
           return {
@@ -132,24 +173,29 @@ export function parseOptions<TOptions extends IRuleOptions>(
         case 'object':
           return {
             ...(options as {}),
-            ...(
-              Object.keys(arg)
-                .reduce((options2, key) => {
-                  return {
-                    ...options2,
-                    [camelize(key)]: arg[key]
-                  };
-                }, {})
-            )
+            ...(Object
+              .keys(arg)
+              .reduce<TOptions>((options2, key) => {
+                return {
+                  ...(options2 as {}),
+                  [camelize(key)]: arg[key]
+                } as TOptions;
+              }, {} as TOptions) as {})
           } as TOptions;
 
         default:
           return options;
       }
-    }, {} as TOptions)
+    },
+    {} as TOptions
   );
 }
 
+/**
+ * Create a camelCase version of the string passed in.
+ *
+ * Words must be seperated by either a dash (-) or an underscore (_).
+ */
 function camelize(text: string): string {
   const words = text.split(/[-_]/g);
   return (
@@ -161,6 +207,9 @@ function camelize(text: string): string {
   );
 }
 
+/**
+ * Capitalize the first character of the given text.
+ */
 function upFirstCharacter(word: string): string {
   return (
     word[0].toUpperCase() +
@@ -170,7 +219,10 @@ function upFirstCharacter(word: string): string {
   );
 }
 
-export function createInvalidNode(
+/**
+ * Mark the given node as invalid
+ */
+export function markAsInvalidNode(
   node: ts.Node,
   failureMessage: string,
   replacements: Array<Lint.Replacement> = []

@@ -11,7 +11,7 @@ import recommendedRuleSet from '../rulesets/recommended';
 import standardRuleSet from '../rulesets/standard';
 
 // Create the standard rule set.
-fs.outputJson(
+const writeStandard = fs.outputJson(
   'tslint-rebeccastevens.json',
   standardRuleSet,
   {
@@ -20,7 +20,7 @@ fs.outputJson(
 );
 
 // Create the recommended rule set.
-fs.outputJson(
+const writeRecommended = fs.outputJson(
   'tslint-rebeccastevens-recommended.json',
   recommendedRuleSet,
   {
@@ -29,7 +29,7 @@ fs.outputJson(
 );
 
 // Create the tslint.json file for the project.
-fs.outputJson(
+const writeTslint = fs.outputJson(
   'tslint.json',
   {
     ...recommendedRuleSet
@@ -39,3 +39,17 @@ fs.outputJson(
     spaces: 2
   }
 );
+
+// Wait for all the promises to resolve.
+Promise.all([
+  writeStandard,
+  writeRecommended,
+  writeTslint
+])
+  .then(() => {
+    console.error('TSLint files have been generated.');
+  })
+  .catch((error: unknown) => {
+    console.error('Something went wrong.', error);
+    process.exit(1);
+  });
