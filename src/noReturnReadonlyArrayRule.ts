@@ -153,6 +153,11 @@ function getInvalidTupleTypeNodes(
   const mutableIds: any = {};
 
   return (
+    /**
+     * TODO: Ensure this flat map doesn't contain any duplicates.
+     * BODY: Duplicates occur when `nodeToMark` gets marked as an invalid node by multiple elements in the tuple.
+     *       Once this has been fixed, the filter function below can be removed.
+     */
     ([] as Array<IInvalidNode>).concat(
       ...tuple.elementTypes.map((element) => {
         switch (element.kind) {
@@ -186,7 +191,6 @@ function getInvalidTupleTypeNodes(
         }
       })
     )
-    // TODO: remove the need for this.
     // Filter out duplicates.
     .filter((item) => {
       const id = item.node.pos;
