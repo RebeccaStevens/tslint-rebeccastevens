@@ -1,0 +1,10 @@
+todo:
+  autoAssign: true
+  keyword: ['@todo', 'TODO:']
+  bodyKeyword: [@body, 'BODY:']
+  blobLines: 5
+  caseSensitive: false
+  label: 'To Do :clipboard:'
+  reopenClosed: true
+  exclude: null
+  
