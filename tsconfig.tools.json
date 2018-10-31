@@ -30,5 +30,6 @@
     "outDir": "rules",
     "removeComments": true
   },
-  "exclude": ["**/*.ts"]
+  "include": ["**/*.ts"],
+  "exclude": ["src/**/*.ts"]
 }
