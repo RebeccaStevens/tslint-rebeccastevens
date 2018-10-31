@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/RebeccaStevens/tslint-rebeccastevens#readme",
   "scripts": {
-    "compile": "tsc",
+    "compile": "ts-node -P tsconfig.tools.json scripts/generate-tslint-files.ts && tsc",
     "lint": "tslint './src/**/*.ts{,x}'",
     "test": "tslint --test test/rules/**/*"
   },
@@ -29,6 +29,10 @@
     "tslint-sonarts": "^1.8.0"
   },
   "devDependencies": {
+    "@types/fs-extra": "^5.0.4",
+    "@types/node": "^10.12.1",
+    "fs-extra": "^7.0.0",
+    "ts-node": "^7.0.1",
     "tslint": "^5.11.0",
     "typescript": "^3.0.0"
   },
