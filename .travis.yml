@@ -10,7 +10,6 @@ node_js:
 install:
   - yarn
 before_script:
-  - yarn compile
 script:
   - yarn lint
   - yarn test
