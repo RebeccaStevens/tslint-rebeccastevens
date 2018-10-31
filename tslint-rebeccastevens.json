@@ -460,9 +460,7 @@
     "no-backbone-get-set-outside-model": false, // should only be enabled when using backbone.
     "no-multiline-string": false,
     "no-relative-imports": false,
-    "no-suspicious-comment": {
-      "severity": "warn"
-    },
+    "no-suspicious-comment": false,
     "prefer-array-literal": false,
     "prefer-type-cast": false
   }
