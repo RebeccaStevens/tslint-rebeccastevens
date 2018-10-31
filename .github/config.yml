@@ -1,10 +1,9 @@
 todo:
   autoAssign: true
-  keyword: ['@todo', 'TODO:']
-  bodyKeyword: [@body, 'BODY:']
+  keyword: ['TODO:', 'FIXME:']
+  bodyKeyword: ['BODY:']
   blobLines: 5
-  caseSensitive: false
+  caseSensitive: true
   label: 'To Do :clipboard:'
   reopenClosed: true
   exclude: null
-  
