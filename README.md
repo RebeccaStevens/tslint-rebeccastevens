@@ -1,9 +1,10 @@
 # tslint-rebeccastevens
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/RebeccaStevens/tslint-rebeccastevens.svg)](https://greenkeeper.io/)
-
 [![npm version][version-badge]][version-url]
 [![travis build][travis-badge]][travis-url]
+[![greenkeeper][greenkeeper-badge]][greenkeeper-url]
+[![dependencies status][david-badge]][david-url]
+[![dev dependencies status][david-dev-badge]][david-dev-url]
 [![MIT license][license-badge]][license-url]
 
 [TSLint](https://palantir.github.io/tslint/) rules I made for myself.
@@ -62,6 +63,12 @@ function test(): { foo: ReadonlyArray<number>; } {
 [version-url]: https://www.npmjs.com/package/@rebeccastevens/tslint-rebeccastevens
 [travis-badge]: https://img.shields.io/travis/com/RebeccaStevens/tslint-rebeccastevens/master.svg?logo=travis&style=flat-square
 [travis-url]: https://travis-ci.com/RebeccaStevens/tslint-rebeccastevens
+[greenkeeper-badge]: https://badges.greenkeeper.io/greenkeeperio/greenkeeper.svg?style=flat-square
+[greenkeeper-url]: https://greenkeeper.io/
+[david-badge]: https://img.shields.io/david/RebeccaStevens/tslint-rebeccastevens.svg?logo=david&style=flat-square
+[david-url]: https://david-dm.org/RebeccaStevens/tslint-rebeccastevens
+[david-dev-badge]: https://img.shields.io/david/dev/RebeccaStevens/tslint-rebeccastevens.svg?logo=david&style=flat-square
+[david-dev-url]: https://david-dm.org/RebeccaStevens/tslint-rebeccastevens?type=dev
 [license-badge]: https://img.shields.io/github/license/RebeccaStevens/tslint-rebeccastevens.svg?style=flat-square
 [license-url]: https://opensource.org/licenses/MIT
 
