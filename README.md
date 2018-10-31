@@ -1,23 +1,45 @@
 # tslint-rebeccastevens
 
-[![npm version][version-badge]][version-url]
-[![travis build][travis-badge]][travis-url]
-[![greenkeeper][greenkeeper-badge]][greenkeeper-url]
-[![dependencies status][david-badge]][david-url]
-[![dev dependencies status][david-dev-badge]][david-dev-url]
-[![MIT license][license-badge]][license-url]
+[![npm version][version-badge]][version-link]
+[![travis build][travis-badge]][travis-link]
+[![greenkeeper][greenkeeper-badge]][greenkeeper-link]
+[![dependencies status][david-badge]][david-link]
+[![dev dependencies status][david-dev-badge]][david-dev-link]
+[![MIT license][license-badge]][license-link]
 
 [TSLint](https://palantir.github.io/tslint/) rules I made for myself.
+
+## Rule Sets
+
+### Standard
+
+The standard rule set contains all the custom rules defined by this project with a default configuration set for each.
+
+### Recommended
+
+The recommended rule set not only contains custom rules from this project but also from many other projects as well as the default rule set.
+
+This rule set is a useful starting point for a new project.
 
 ## TSLint Rules
 
 ### no-return-readonly-array
 
-[![type-info-badge]][type-info-url]
+[![type-info-badge]][type-info-link]
 
-This rule prevents the type `ReadonlyArray<T>` from being returned from a function. Functions should not rely on their return type being of type `ReadonlyArray<T>` to prevent mutation as 3rd parties can still modify it (by casting it to a standard array). If a function needs to ensure the array it returns is immutable, it should use [`Object.freeze`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze).
+This rule prevents the type `ReadonlyArray<T>` from being returned from a function.
 
-Also note that values of type `ReadonlyArray<T>` cannot be provided to something wanting the type `Array<T>`.
+Functions should not rely on their return type being of type `ReadonlyArray<T>` to prevent mutation as 3rd parties are still able to modify it. If a function needs to ensure the array it returns is immutable, it should use [`Object.freeze`][object.freeze-link].
+
+Also note that values of type `ReadonlyArray<T>` cannot be provided to functions expecting a value of type `Array<T>`.
+
+*Example:*
+
+```ts
+function(): ReadonlyArray<number> {
+  //        ^ Do not return a ReadonlyArray; return an Array instead.
+}
+```
 
 #### Options
 
@@ -45,33 +67,30 @@ function test(): { foo: ReadonlyArray<number>; } {
 }
 ```
 
-#### Example config
+#### Default config
 
 ```json
-"no-return-readonly-array": true
+"no-return-readonly-array": [true, "include-type-arguments", "deep"]
 ```
 
-```json
-"no-return-readonly-array": [true, "include-type-arguments"]
-```
-
-```json
-"no-return-readonly-array": [true, "deep"]
-```
+<!-- Badge urls -->
 
 [version-badge]: https://img.shields.io/npm/v/@rebeccastevens/tslint-rebeccastevens.svg?logo=npm&style=flat-square
-[version-url]: https://www.npmjs.com/package/@rebeccastevens/tslint-rebeccastevens
 [travis-badge]: https://img.shields.io/travis/com/RebeccaStevens/tslint-rebeccastevens/master.svg?logo=travis&style=flat-square
-[travis-url]: https://travis-ci.com/RebeccaStevens/tslint-rebeccastevens
 [greenkeeper-badge]: https://badges.greenkeeper.io/RebeccaStevens/tslint-rebeccastevens.svg?style=flat-square
-[greenkeeper-url]: https://greenkeeper.io/
 [david-badge]: https://img.shields.io/david/RebeccaStevens/tslint-rebeccastevens.svg?logo=david&style=flat-square
-[david-url]: https://david-dm.org/RebeccaStevens/tslint-rebeccastevens
 [david-dev-badge]: https://img.shields.io/david/dev/RebeccaStevens/tslint-rebeccastevens.svg?logo=david&style=flat-square
-[david-dev-url]: https://david-dm.org/RebeccaStevens/tslint-rebeccastevens?type=dev
 [license-badge]: https://img.shields.io/github/license/RebeccaStevens/tslint-rebeccastevens.svg?style=flat-square
-[license-url]: https://opensource.org/licenses/MIT
-
 [has-fixer-badge]: https://img.shields.io/badge/has_fixer-yes-388e3c.svg?style=flat-square
 [type-info-badge]: https://img.shields.io/badge/type_info-requried-d51313.svg?style=flat-square
-[type-info-url]: https://palantir.github.io/tslint/usage/type-checking
+
+<!-- Link urls -->
+
+[version-link]: https://www.npmjs.com/package/@rebeccastevens/tslint-rebeccastevens
+[travis-link]: https://travis-ci.com/RebeccaStevens/tslint-rebeccastevens
+[greenkeeper-link]: https://greenkeeper.io/
+[david-link]: https://david-dm.org/RebeccaStevens/tslint-rebeccastevens
+[david-dev-link]: https://david-dm.org/RebeccaStevens/tslint-rebeccastevens?type=dev
+[license-link]: https://opensource.org/licenses/MIT
+[type-info-link]: https://palantir.github.io/tslint/usage/type-checking
+[object.freeze-link]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze
