@@ -1,5 +1,7 @@
 # tslint-rebeccastevens
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/RebeccaStevens/tslint-rebeccastevens.svg)](https://greenkeeper.io/)
+
 [![npm version][version-badge]][version-url]
 [![travis build][travis-badge]][travis-url]
 [![MIT license][license-badge]][license-url]
