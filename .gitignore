@@ -5,5 +5,5 @@ node_modules/
 /coverage
 
 # Generate Files
-tslint.json
-tslint-*.json
+/tslint.json
+/tslint-*.json

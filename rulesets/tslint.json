@@ -1,0 +1,10 @@
+{
+  "extends": "../tslint.json",
+  "rules": {
+    "no-default-export": false,
+    "no-duplicate-string": false,
+    "no-implicit-dependencies": [true, "dev"],
+    "no-magic-numbers": false,
+    "no-null-keyword": false
+  }
+}
