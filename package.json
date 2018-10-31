@@ -19,7 +19,8 @@
   "scripts": {
     "compile": "ts-node -P tsconfig.tools.json scripts/generate-tslint-files.ts && tsc",
     "lint": "tslint './src/**/*.ts{,x}'",
-    "test": "tslint --test test/rules/**/*"
+    "test": "tslint --test test/rules/**/*",
+    "prepublish": "yarn compile && yarn lint && yarn test"
   },
   "dependencies": {
     "tslint-clean-code": "^0.2.8",
