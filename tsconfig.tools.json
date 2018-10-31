@@ -1,7 +1,15 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": ".",
+    "moduleResolution": "node",
     "lib": ["esnext"],
-    "skipLibCheck": true,
+    "types": [
+      "node"
+    ],
+    "typeRoots": [
+      "node_modules"
+    ],
 
     // Coding style
     "forceConsistentCasingInFileNames": true,
@@ -22,5 +30,5 @@
     "outDir": "rules",
     "removeComments": true
   },
-  "include": ["src/**/*.ts"]
+  "exclude": ["**/*.ts"]
 }
