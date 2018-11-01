@@ -2,6 +2,7 @@
 
 [![npm version][version-badge]][version-link]
 [![travis build][travis-badge]][travis-link]
+[![Coverage Status][coverage-badge]][coverage-link]
 [![greenkeeper][greenkeeper-badge]][greenkeeper-link]
 [![dependencies status][david-badge]][david-link]
 [![dev dependencies status][david-dev-badge]][david-dev-link]
@@ -80,6 +81,8 @@ function test(): { foo: ReadonlyArray<number>; } {
 [greenkeeper-badge]: https://badges.greenkeeper.io/RebeccaStevens/tslint-rebeccastevens.svg?style=flat-square
 [david-badge]: https://img.shields.io/david/RebeccaStevens/tslint-rebeccastevens.svg?logo=david&style=flat-square
 [david-dev-badge]: https://img.shields.io/david/dev/RebeccaStevens/tslint-rebeccastevens.svg?logo=david&style=flat-square
+[coverage-badge]:
+https://img.shields.io/coveralls/github/RebeccaStevens/tslint-rebeccastevens/master.svg?style=flat-square
 [license-badge]: https://img.shields.io/github/license/RebeccaStevens/tslint-rebeccastevens.svg?style=flat-square
 [has-fixer-badge]: https://img.shields.io/badge/has_fixer-yes-388e3c.svg?style=flat-square
 [type-info-badge]: https://img.shields.io/badge/type_info-requried-d51313.svg?style=flat-square
@@ -91,6 +94,7 @@ function test(): { foo: ReadonlyArray<number>; } {
 [greenkeeper-link]: https://greenkeeper.io/
 [david-link]: https://david-dm.org/RebeccaStevens/tslint-rebeccastevens
 [david-dev-link]: https://david-dm.org/RebeccaStevens/tslint-rebeccastevens?type=dev
+[coverage-link]: https://coveralls.io/github/RebeccaStevens/tslint-rebeccastevens?branch=master
 [license-link]: https://opensource.org/licenses/BSD-3-Clause
 [type-info-link]: https://palantir.github.io/tslint/usage/type-checking
 [object.freeze-link]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze
