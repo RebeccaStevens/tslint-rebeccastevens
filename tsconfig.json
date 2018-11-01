@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
+    "moduleResolution": "node",
     "lib": ["esnext"],
     "skipLibCheck": true,
 
     // Coding style
     "forceConsistentCasingInFileNames": true,
     "newLine": "LF",
-    "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -16,11 +16,11 @@
     "strictNullChecks": true,
 
     // Output
-    "module": "commonjs",
-    "target": "es5",
+    "module": "esnext",
+    "target": "es2017",
     "sourceMap": false,
-    "outDir": "rules",
-    "removeComments": true
+    "removeComments": false,
+    "isolatedModules": true
   },
   "include": ["src/**/*.ts"]
 }

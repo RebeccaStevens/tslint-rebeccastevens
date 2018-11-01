@@ -1,0 +1,88 @@
+/**
+ * Terser Config.
+ */
+// @ts-check
+
+export default {
+  compress: {
+    arrows: true,
+    arguments: true,
+    booleans: true,
+    booleans_as_integers: false,
+    collapse_vars: true,
+    comparisons: true,
+    computed_props: true,
+    conditionals: true,
+    dead_code: true,
+    defaults: false,
+    directives: true,
+    drop_console: true,
+    drop_debugger: true,
+    evaluate: true,
+    expression: false,
+    global_defs: {},
+    hoist_funs: true,
+    hoist_props: true,
+    hoist_vars: true,
+    if_return: true,
+    inline: true,
+    join_vars: true,
+    keep_fargs: false,
+    keep_infinity: true,
+    loops: true,
+    negate_iife: false,
+    passes: 5,
+    properties: true,
+    pure_funcs: [
+
+    ],
+    pure_getters: true,
+    reduce_funcs: true,
+    reduce_vars: true,
+    sequences: false,
+    side_effects: true,
+    switches: true,
+    top_retain: null,
+    typeofs: false,
+    unsafe: true,
+    unsafe_arrows: true,
+    unsafe_comps: true,
+    unsafe_Function: true,
+    unsafe_math: true,
+    unsafe_methods: false,
+    unsafe_proto: false,
+    unsafe_regexp: false,
+    unsafe_undefined: false,
+    unused: true
+  },
+  mangle: {
+    eval: false,
+    reserved: []
+  },
+  output: {
+    ascii_only: false,
+    beautify: false,
+    braces: false,
+    comments: false,
+    ecma: 6,
+    indent_level: 2,
+    indent_start: 0,
+    inline_script: true,
+    keep_quoted_props: true,
+    max_line_len: 1024,
+    preamble: null,
+    quote_keys: false,
+    quote_style: 0,
+    semicolons: true
+  },
+  sourcemap: false,
+  ecma: 8,
+  keep_classnames: /^Rule$/,
+  keep_fnames: false,
+  ie8: false,
+  module: true,
+  nameCache: null,
+  safari10: false,
+  toplevel: true,
+  warnings: false
+};
