@@ -5,7 +5,7 @@
 [![greenkeeper][greenkeeper-badge]][greenkeeper-link]
 [![dependencies status][david-badge]][david-link]
 [![dev dependencies status][david-dev-badge]][david-dev-link]
-[![MIT license][license-badge]][license-link]
+[![BSD 3 Clause license][license-badge]][license-link]
 
 [TSLint](https://palantir.github.io/tslint/) rules I made for myself.
 
@@ -91,6 +91,6 @@ function test(): { foo: ReadonlyArray<number>; } {
 [greenkeeper-link]: https://greenkeeper.io/
 [david-link]: https://david-dm.org/RebeccaStevens/tslint-rebeccastevens
 [david-dev-link]: https://david-dm.org/RebeccaStevens/tslint-rebeccastevens?type=dev
-[license-link]: https://opensource.org/licenses/MIT
+[license-link]: https://opensource.org/licenses/BSD-3-Clause
 [type-info-link]: https://palantir.github.io/tslint/usage/type-checking
 [object.freeze-link]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze

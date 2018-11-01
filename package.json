@@ -8,7 +8,7 @@
     "url": "git+https://github.com/RebeccaStevens/tslint-rebeccastevens.git"
   },
   "author": "Rebecca Stevens <rebecca.stevens@outlook.co.nz>",
-  "license": "MIT",
+  "license": "BSD-3-Clause",
   "keywords": [
     "tslint"
   ],
