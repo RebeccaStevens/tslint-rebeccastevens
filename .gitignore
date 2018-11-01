@@ -1,9 +1,14 @@
 # Node
 node_modules/
+
+# Logs
 *.log
-/rules
-/coverage
 
 # Generate Files
+/rules
 /tslint.json
 /tslint-*.json
+/.nyc_output
+/coverage
+/src/**/*.js
+/src/**/*.js.map

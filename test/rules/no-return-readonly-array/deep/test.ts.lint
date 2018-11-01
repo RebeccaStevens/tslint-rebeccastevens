@@ -58,6 +58,7 @@ function test(): { foo: { bar: Array<number>; }; } {
       bar: [0, 1, 2]
     }
   };
+}
 
 function test(): GoodTuple {
   return [
@@ -114,6 +115,7 @@ function test(): { foo: { bar: ReadonlyArray<number>; }; } {
       bar: [0, 1, 2]
     }
   };
+}
 
 function test(): BadTuple {
                  ~~~~~~~~ [failure]

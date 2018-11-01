@@ -1,5 +1,5 @@
 {
-  "rulesDirectory": ["../../../../rules"],
+  "rulesDirectory": ["../../../../src"],
   "rules": {
     "no-return-readonly-array": [true, "deep"]
   }
