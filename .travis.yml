@@ -12,5 +12,6 @@ install:
 before_script:
 script:
   - yarn lint
-  - yarn test
+  - yarn test-with-coverage
 after_success:
+  - yarn report-coverage
