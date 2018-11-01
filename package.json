@@ -22,7 +22,7 @@
     "compile:build": "run-s compile:build:pre compile:build:run",
     "compile:build:pre": "del 'rules'",
     "compile:build:run": "rollup -c",
-    "lint": "run-p lint:*",
+    "lint": "run-p lint:ts:src lint:ts:other",
     "lint:ts:src": "tslint --project tsconfig.json",
     "lint:ts:other": "tslint --project tsconfig.tools.json",
     "test": "run-s test:pre test:run test:cleanup --continue-on-error",
