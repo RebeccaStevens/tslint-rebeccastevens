@@ -38,11 +38,11 @@ type ParseOptionsFunction<TOptions> = (
 type RuleArgument =
   | string
   | {
-      readonly [key: string]: string | Array<string>;
+      readonly [key: string]: unknown;
     };
 
 interface IRuleOptions {
-  // readonly [key: string]: (string | Array<string>);
+  readonly [key: string]: unknown;
 }
 
 export type TsSyntaxFunction =
