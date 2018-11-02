@@ -1,5 +1,6 @@
 *.log
 .*
+/coverage/
 /rulesets/
 /scripts/
 /src/
