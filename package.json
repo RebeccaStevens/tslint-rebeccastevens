@@ -1,6 +1,6 @@
 {
   "name": "@rebeccastevens/tslint-rebeccastevens",
-  "version": "0.2.0-beta.1",
+  "version": "0.2.0-beta.2",
   "description": "TSLint rules I made for myself.",
   "main": "ruleset-standard.json",
   "repository": {
