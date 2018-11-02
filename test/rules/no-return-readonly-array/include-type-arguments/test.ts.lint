@@ -25,4 +25,12 @@ function test(): IFoo<Promise<ReadonlyArray<number>>,number> {
   };
 }
 
+function* test(): IterableIterator<ReadonlyArray<number>> {
+                                   ~~~~~~~~~~~~~~~~~~~~~ [failure]
+  let value = 0;
+  while (true) {
+    yield [value++];
+  }
+}
+
 [failure]: Do not return a type containing a ReadonlyArray; use an Array instead.

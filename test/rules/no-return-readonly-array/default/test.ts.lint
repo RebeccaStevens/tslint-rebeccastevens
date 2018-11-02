@@ -3,4 +3,21 @@ function test(): ReadonlyArray<number> {
   return [0, 1, 2];
 }
 
+const test = function(): ReadonlyArray<number> {
+                         ~~~~~~~~~~~~~~~~~~~~~ [failure]
+  return [0, 1, 2];
+}
+
+const test = (): ReadonlyArray<number> => {
+                 ~~~~~~~~~~~~~~~~~~~~~ [failure]
+  return [0, 1, 2];
+}
+
+class Test {
+  test(): ReadonlyArray<number> {
+          ~~~~~~~~~~~~~~~~~~~~~ [failure]
+    return [0, 1, 2];
+  }
+}
+
 [failure]: Do not return a ReadonlyArray; return an Array instead.

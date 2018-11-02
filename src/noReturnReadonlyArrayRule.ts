@@ -55,7 +55,8 @@ function getInvalidNodes(
   if (!(
     node.kind === ts.SyntaxKind.FunctionDeclaration ||
     node.kind === ts.SyntaxKind.FunctionExpression ||
-    node.kind === ts.SyntaxKind.ArrowFunction
+    node.kind === ts.SyntaxKind.ArrowFunction ||
+    node.kind === ts.SyntaxKind.MethodDeclaration
   )) {
     return [];
   }

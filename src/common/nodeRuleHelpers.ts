@@ -56,7 +56,8 @@ interface RuleOptions {
 export type TsSyntaxFunction =
   | ts.FunctionDeclaration
   | ts.FunctionExpression
-  | ts.ArrowFunction;
+  | ts.ArrowFunction
+  | ts.MethodDeclaration;
 
 export type TsSyntaxFunctionTyped =
   TsSyntaxFunction
