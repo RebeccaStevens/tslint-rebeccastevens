@@ -36,7 +36,7 @@
     "test:common": "jest",
     "report-coverage": "cat ./coverage/lcov.info | coveralls",
     "prepublish": "yarn compile",
-    "prepublishOnly": "run-s lint test"
+    "prepublishOnly": "run-s test"
   },
   "dependencies": {
     "tslint-clean-code": "^0.2.9",
