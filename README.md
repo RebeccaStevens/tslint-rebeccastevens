@@ -12,15 +12,35 @@
 
 ## Rule Sets
 
-### Standard
+### Standard (default)
 
 The standard rule set contains all the custom rules defined by this project with a default configuration set for each.
+
+`tslint.json` config:
+
+```json
+{
+  "extends": [
+    "@rebeccastevens/tslint-rebeccastevens"
+  ]
+}
+```
 
 ### Recommended
 
 The recommended rule set not only contains custom rules from this project but also from many other projects as well as the default rule set.
 
 This rule set is a useful starting point for a new project.
+
+`tslint.json` config:
+
+```json
+{
+  "extends": [
+    "@rebeccastevens/tslint-rebeccastevens/ruleset-recommended"
+  ]
+}
+```
 
 ## TSLint Rules
 

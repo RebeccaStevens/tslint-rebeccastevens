@@ -2,7 +2,7 @@
   "name": "@rebeccastevens/tslint-rebeccastevens",
   "version": "0.2.0-beta.1",
   "description": "TSLint rules I made for myself.",
-  "main": "tslint-rebeccastevens.json",
+  "main": "ruleset-standard.json",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/RebeccaStevens/tslint-rebeccastevens.git"

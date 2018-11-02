@@ -7,7 +7,7 @@ node_modules/
 # Generate Files
 /rules
 /tslint.json
-/tslint-*.json
+/ruleset-*.json
 /.nyc_output
 /coverage
 /src/**/*.js

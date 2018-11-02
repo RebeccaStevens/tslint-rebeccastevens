@@ -1,8 +1,8 @@
 /**
  * Generate the following files:
  * - tslint.json
- * - tslint-rebeccastevens.json
- * - tslint-rebeccastevens-recommended.json
+ * - ruleset-standard.json
+ * - ruleset-recommended.json
  */
 
 import * as fs from 'fs-extra';
@@ -12,7 +12,7 @@ import standardRuleSet from '../rulesets/standard';
 
 // Create the standard rule set.
 const writeStandard = fs.outputJson(
-  'tslint-rebeccastevens.json',
+  'ruleset-standard.json',
   standardRuleSet,
   {
     spaces: 2
@@ -21,7 +21,7 @@ const writeStandard = fs.outputJson(
 
 // Create the recommended rule set.
 const writeRecommended = fs.outputJson(
-  'tslint-rebeccastevens-recommended.json',
+  'ruleset-recommended.json',
   recommendedRuleSet,
   {
     spaces: 2
