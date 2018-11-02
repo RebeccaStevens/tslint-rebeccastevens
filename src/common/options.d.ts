@@ -2,10 +2,10 @@
  * Rule options.
  */
 
-export interface IDeep {
+export interface Deep {
   readonly deep?: boolean;
 }
 
-export interface IIncludeTypeArguments {
+export interface IncludeTypeArguments {
   readonly includeTypeArguments?: boolean;
 }

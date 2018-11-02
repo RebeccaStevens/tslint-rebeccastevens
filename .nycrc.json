@@ -11,8 +11,7 @@
     "src/**/*"
   ],
   "exclude": [
-    "src/index.ts",
-    "src/common/options.ts"
+    "src/index.ts"
   ],
   "extension": [
     ".ts"

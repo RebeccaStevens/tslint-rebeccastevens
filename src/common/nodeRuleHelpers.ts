@@ -12,27 +12,35 @@ type NodeRuleFunction<TOptions> =
 export type UntypedNodeRuleFunction<TOptions> = (
   node: ts.Node,
   ctx: Lint.WalkContext<TOptions>
-) => IRuleFunctionResult;
+) => RuleFunctionResult;
 
 export type TypedNodeRuleFunction<TOptions> = (
   node: ts.Node,
   ctx: Lint.WalkContext<TOptions>,
   checker: ts.TypeChecker
-) => IRuleFunctionResult;
+) => RuleFunctionResult;
 
-export interface IRuleFunctionResult {
-  readonly invalidNodes: ReadonlyArray<IInvalidNode>;
+export interface RuleFunctionResult {
+  readonly invalidNodes: ReadonlyArray<InvalidNode>;
   readonly skipChildren?: boolean;
 }
 
-export interface IInvalidNode {
+export interface InvalidNode {
   readonly node: ts.Node;
   readonly failureMessage: string;
-  readonly replacements: Array<Lint.Replacement>;
+  readonly replacements: ReadonlyArray<Lint.Replacement>;
 }
 
+// tslint:disable:readonly-keyword readonly-array
+interface MutableInvalidNode {
+  node: ts.Node;
+  failureMessage: string;
+  replacements: Array<Lint.Replacement>;
+}
+// tslint:enable:readonly-keyword readonly-array
+
 type ParseOptionsFunction<TOptions> = (
-  ruleArguments: Array<RuleArgument>
+  ruleArguments: ReadonlyArray<RuleArgument>
 ) => TOptions;
 
 type RuleArgument =
@@ -41,7 +49,7 @@ type RuleArgument =
       readonly [key: string]: unknown;
     };
 
-interface IRuleOptions {
+interface RuleOptions {
   readonly [key: string]: unknown;
 }
 
@@ -60,7 +68,7 @@ export type TsSyntaxFunctionTyped =
 /**
  * Create a Rule class from a rule function.
  */
-export function createNodeRule<TOptions extends IRuleOptions>(
+export function createNodeRule<TOptions extends RuleOptions>(
   ruleFunction: NodeRuleFunction<TOptions>,
   doParseOptions: ParseOptionsFunction<TOptions> = parseOptions
 ): { new (): Lint.Rules.AbstractRule } {
@@ -85,7 +93,7 @@ export function createNodeRule<TOptions extends IRuleOptions>(
 /**
  * Create a Rule class from a rule function that uses type information.
  */
-export function createNodeTypedRule<TOptions extends IRuleOptions>(
+export function createNodeTypedRule<TOptions extends RuleOptions>(
   ruleFunction: TypedNodeRuleFunction<TOptions>,
   doParseOptions: ParseOptionsFunction<TOptions> = parseOptions
 ): { new (): Lint.Rules.TypedRule } {
@@ -140,10 +148,12 @@ function walk<TOptions>(
  * Report the invalid nodes.
  */
 function reportInvalidNodes<TOptions>(
-  invalidNodes: ReadonlyArray<IInvalidNode>,
+  invalidNodes: ReadonlyArray<InvalidNode>,
   ctx: Lint.WalkContext<TOptions>
 ): void {
-  invalidNodes.forEach((invalidNode) => {
+  // At this point we are finished with the invalid nodes and so we can
+  // pass them of with mutable properties.
+  invalidNodes.forEach((invalidNode: MutableInvalidNode) => {
     ctx.addFailureAtNode(
       invalidNode.node,
       invalidNode.failureMessage,
@@ -158,8 +168,8 @@ function reportInvalidNodes<TOptions>(
  * to options in format
  * {fooBar: true, doIt: "foo", doNotDoIt: true}
  */
-export function parseOptions<TOptions extends IRuleOptions>(
-  ruleArguments: Array<RuleArgument>
+export function parseOptions<TOptions extends RuleOptions>(
+  ruleArguments: ReadonlyArray<RuleArgument>
 ): TOptions {
   return ruleArguments.reduce<TOptions>(
     (options, arg) => {
@@ -225,7 +235,7 @@ function upFirstCharacter(word: string): string {
 export function markAsInvalidNode(
   node: ts.Node,
   failureMessage: string,
-  replacements: Array<Lint.Replacement> = []
-): IInvalidNode {
+  replacements: ReadonlyArray<Lint.Replacement> = []
+): InvalidNode {
   return { node, failureMessage, replacements };
 }

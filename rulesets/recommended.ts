@@ -1,6 +1,8 @@
+import { RuleConfig } from './RuleConfig';
+
 const defaultSeverity = 'error';
 const rulesDirectory = './rules';
-const tslintExtends = [
+const tslintExtends: ReadonlyArray<string> = [
   'tslint-microsoft-contrib',
   'tslint-consistent-codestyle',
   'tslint-clean-code',
@@ -8,17 +10,24 @@ const tslintExtends = [
   'tslint-immutable'
 ];
 
+const mutablePrefixes: ReadonlyArray<string> = [
+  'mutable',
+  '_mutable',
+  'this.mutable',
+  'this._mutable'
+];
+
 /**
  * My Rules.
  */
-const myRules = {
+const myRules: RuleConfig = {
   'no-return-readonly-array': [true, 'include-type-arguments', 'deep']
 };
 
 /**
  * Built In Rules.
  */
-const builtInRules = {
+const builtInRules: RuleConfig = {
   // TypeScript-specific
   'adjacent-overload-signatures': true,
   'ban-types': true,
@@ -90,24 +99,24 @@ const builtInRules = {
   'no-conditional-assignment': true,
   'no-console': [
     true,
-    // "assert",
+    // 'assert',
     'clear',
     'count',
     'debug',
     'dir',
     'dirxml',
-    // "error",
+    // 'error',
     'group',
     'groupCollapsed',
     'groupEnd',
-    // "info",
+    // 'info',
     'log',
     'table',
     'time',
     'timeEnd',
     'timeStamp',
     'trace'
-    // "warn"
+    // 'warn'
   ],
   'no-construct': true,
   'no-debugger': true,
@@ -223,7 +232,7 @@ const builtInRules = {
   'encoding': true,
   'file-header': false,
   'import-spacing': true,
-  'interface-name': [true, 'always-prefix'],
+  'interface-name': [true, 'never-prefix'],
   'interface-over-type-literal': true,
   'jsdoc-format': [true, 'check-multiline-start'],
   'match-default-export-name': false,
@@ -302,14 +311,14 @@ const builtInRules = {
 /**
  * tslint-clean-code rules.
  */
-const cleanCodeRules = {
+const cleanCodeRules: RuleConfig = {
   'newspaper-order': true
 };
 
 /**
  * SonarTS rules.
  */
-const sonarTSRules = {
+const sonarTSRules: RuleConfig = {
   'no-nested-template-literals': false,
   'no-small-switch': false
 };
@@ -317,7 +326,7 @@ const sonarTSRules = {
 /**
  * consistent-codestyle rules.
  */
-const consistentCodestyleRules = {
+const consistentCodestyleRules: RuleConfig = {
   'early-exit': false,
   'naming-convention': [
     true,
@@ -366,7 +375,7 @@ const consistentCodestyleRules = {
       modifiers: 'protected',
       leadingUnderscore: 'require'
     },
-    // Exclicitly disable the format check only for method toJSON.
+    // Explicitly disable the format check only for method toJSON.
     {
       type: 'method',
       filter: '^toJSON$',
@@ -389,11 +398,12 @@ const consistentCodestyleRules = {
       modifiers: 'abstract',
       prefix: 'Abstract'
     },
-    // Interface names must start with "I". The following part of the name must be valid PascalCase
-    {
-      type: 'interface',
-      prefix: 'I'
-    },
+    // // Interface names must start with "I". The following part of the name must be valid PascalCase
+    // // Using interface-name
+    // {
+    //   type: 'interface',
+    //   prefix: 'I'
+    // },
     // Enum members must be in PascalCase.
     {
       type: 'enumMember',
@@ -413,26 +423,33 @@ const consistentCodestyleRules = {
 /**
  * Immutable rules
  */
-const immutableRules = {
+const immutableRules: RuleConfig = {
   'readonly-keyword': [
     true,
     {
-      'ignore-prefix': ['mutable', '_mutable', 'this.mutable', 'this._mutable']
+      'ignore-prefix': mutablePrefixes
     }
   ],
-  'readonly-array': false, // using `no-array-mutation` instead.
+  'readonly-array': [
+    true, // This rule is not ready for uses yet - more exception needed.
+    {
+      'ignore-prefix': mutablePrefixes,
+      'ignore-rest-parameters': true,
+      'ignore-return-type': true
+    }
+  ],
   'no-let': true,
   'no-array-mutation': [
     true,
     {
-      'ignore-prefix': ['mutable', '_mutable', 'this.mutable', 'this._mutable'],
+      'ignore-prefix': mutablePrefixes,
       'ignore-mutation-following-accessor': true
     }
   ],
   'no-object-mutation': [
     true,
     {
-      'ignore-prefix': ['mutable', '_mutable', 'this.mutable', 'this._mutable']
+      'ignore-prefix': mutablePrefixes
     }
   ],
   'no-delete': false, // using `no-array-mutation` and `no-object-mutation`.
@@ -445,7 +462,7 @@ const immutableRules = {
 /**
  * Microsoft-contrib rules.
  */
-const microsoftContribRules = {
+const microsoftContribRules: RuleConfig = {
   'export-name': false,
   'function-name': false, // using `naming-convention` instead.
   'import-name': false,

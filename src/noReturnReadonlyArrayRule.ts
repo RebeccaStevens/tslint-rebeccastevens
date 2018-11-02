@@ -13,7 +13,7 @@ import * as ts from 'typescript';
 
 import {
   createNodeTypedRule,
-  IInvalidNode,
+  InvalidNode,
   markAsInvalidNode,
   TsSyntaxFunction,
   TsSyntaxFunctionTyped
@@ -21,8 +21,8 @@ import {
 import * as Options from './common/options';
 
 type RuleOptions =
-  & Options.IDeep
-  & Options.IIncludeTypeArguments;
+  & Options.Deep
+  & Options.IncludeTypeArguments;
 
 const failureMessageDefault =
   'Do not return a ReadonlyArray; return an Array instead.';
@@ -51,7 +51,7 @@ function getInvalidNodes(
   node: ts.Node,
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker
-): Array<IInvalidNode> {
+): Array<InvalidNode> {
   if (!(
     node.kind === ts.SyntaxKind.FunctionDeclaration ||
     node.kind === ts.SyntaxKind.FunctionExpression ||
@@ -100,7 +100,7 @@ function getDeepInvalidNodes(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   typedFunction: TsSyntaxFunctionTyped
-): Array<IInvalidNode> {
+): Array<InvalidNode> {
   if (typedFunction.type.kind === ts.SyntaxKind.TypeLiteral) {
     const invalidTypeLiteralNodes = getInvalidTypeLiteralNodes(
       typedFunction.type as ts.TypeLiteralNode,
@@ -136,7 +136,7 @@ function getInvalidPropertySignatureNodes(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   nodeToMark?: ts.Node
-): Array<IInvalidNode> {
+): Array<InvalidNode> {
   if (propertySignature.type === undefined) {
     return [];
   }
@@ -180,7 +180,7 @@ function getInvalidTupleTypeNodes(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   nodeToMark?: ts.Node
-): Array<IInvalidNode> {
+): Array<InvalidNode> {
   // tslint:disable-next-line:no-any
   const mutableIds: any = {};
 
@@ -190,7 +190,7 @@ function getInvalidTupleTypeNodes(
      * BODY: Duplicates occur when `nodeToMark` gets marked as an invalid node by multiple elements in the tuple.
      *       Once this has been fixed, the filter function below can be removed.
      */
-    ([] as Array<IInvalidNode>).concat(
+    ([] as ReadonlyArray<InvalidNode>).concat(
       ...tuple.elementTypes.map((element) => {
         switch (element.kind) {
           case ts.SyntaxKind.TypeReference:
@@ -246,7 +246,7 @@ function getInvalidTypeReferenceNodes(
   checker: ts.TypeChecker,
   failureMessage: string,
   nodeToMark?: ts.Node
-): Array<IInvalidNode> {
+): Array<InvalidNode> {
   if (typeReference.typeName.kind === ts.SyntaxKind.Identifier) {
     if (typeReference.typeName.text === 'ReadonlyArray') {
       return [
@@ -292,7 +292,7 @@ function getInvalidTypeReferenceNodesWithTypeChecking(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   nodeToMark?: ts.Node
-): Array<IInvalidNode> {
+): Array<InvalidNode> {
   if (!Boolean(ctx.options.deep)) {
     return [];
   }
@@ -336,7 +336,7 @@ function getInvalidTypeReferenceNodesUsingNodeType(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   nodeToMark?: ts.Node
-): Array<IInvalidNode> {
+): Array<InvalidNode> {
   const typeReferenceTypeNode = checker.typeToTypeNode(typeReferenceType);
 
   if (typeReferenceTypeNode !== undefined) {
@@ -390,9 +390,9 @@ function getInvalidTypeReferenceNodesUsingTypeAlias(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   nodeToMark?: ts.Node
-): Array<IInvalidNode> {
+): Array<InvalidNode> {
   if (typeReferenceType.aliasSymbol !== undefined) {
-    return ([] as Array<IInvalidNode>).concat(
+    return ([] as ReadonlyArray<InvalidNode>).concat(
       ...typeReferenceType.aliasSymbol.declarations.map((declaration) => {
         if (declaration.kind === ts.SyntaxKind.TypeAliasDeclaration) {
           const typeAliasDeclaration = declaration as ts.TypeAliasDeclaration;
@@ -428,9 +428,9 @@ function getInvalidTypeLiteralNodes(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   nodeToMark?: ts.Node
-): Array<IInvalidNode> {
+): Array<InvalidNode> {
   return (
-    ([] as Array<IInvalidNode>).concat(
+    ([] as ReadonlyArray<InvalidNode>).concat(
       ...typeLiteral.members.map((member) => {
         switch (member.kind) {
           case ts.SyntaxKind.PropertySignature:
@@ -457,13 +457,13 @@ function getInvalidTypeArgumentNodes(
   checker: ts.TypeChecker,
   failureMessage: string,
   nodeToMark?: ts.Node
-): Array<IInvalidNode> {
+): Array<InvalidNode> {
   if (typeReference.typeArguments === undefined) {
     return [];
   }
 
   return (
-    ([] as Array<IInvalidNode>).concat(
+    ([] as ReadonlyArray<InvalidNode>).concat(
       ...typeReference.typeArguments.map((argument) => {
         if (argument.kind !== ts.SyntaxKind.TypeReference) {
           return [];
