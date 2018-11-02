@@ -153,7 +153,7 @@ function reportInvalidNodes<TOptions>(
   ctx: Lint.WalkContext<TOptions>
 ): void {
   // At this point we are finished with the invalid nodes and so we can
-  // pass them of with mutable properties.
+  // safely pass them off with mutable properties.
   invalidNodes.forEach((invalidNode: MutableInvalidNode) => {
     ctx.addFailureAtNode(
       invalidNode.node,
