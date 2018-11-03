@@ -6,12 +6,11 @@ cache:
 node_js:
   - "10"
   - "8"
-  - "6"
 install:
   - yarn
 before_script:
 script:
   - yarn lint
   - yarn test
-after_success:
+after_script:
   - yarn report-coverage

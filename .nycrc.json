@@ -17,10 +17,9 @@
     ".ts"
   ],
   "reporter": [
-    "text",
-    "html",
     "lcov"
   ],
   "cache": false,
-  "all": true
+  "all": true,
+  "report-dir": "./coverage/nyc"
 }
