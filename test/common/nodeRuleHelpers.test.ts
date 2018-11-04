@@ -29,7 +29,7 @@ describe('nodeRuleHelpers', () => {
   });
 
   it('can parse rule options', () => {
-    interface IOptions {
+    interface Options {
       readonly fooBar?: boolean;
       readonly doIt?: string;
       readonly thisAsWell?: {
@@ -39,7 +39,7 @@ describe('nodeRuleHelpers', () => {
       readonly doNotDoIt?: boolean;
     }
 
-    const parsed: IOptions = parseOptions<IOptions>([
+    const parsed: Options = parseOptions<Options>([
       'foo-bar',
       {
         'do-it': 'foo',

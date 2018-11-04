@@ -125,6 +125,10 @@
     "@types/minimatch" "*"
     "@types/node" "*"
 
+"@types/istanbul-lib-coverage@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@types/istanbul-lib-coverage/-/istanbul-lib-coverage-1.1.0.tgz#2cc2ca41051498382b43157c8227fea60363f94a"
+
 "@types/jest@^23.3.9":
   version "23.3.9"
   resolved "https://registry.yarnpkg.com/@types/jest/-/jest-23.3.9.tgz#c16b55186ee73ae65e001fbee69d392c51337ad1"
@@ -161,8 +165,8 @@ acorn@^5.5.3:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-5.7.3.tgz#67aa231bf8812974b85235a96771eb6bd07ea279"
 
 acorn@^6.0.1:
-  version "6.0.2"
-  resolved "https://registry.yarnpkg.com/acorn/-/acorn-6.0.2.tgz#6a459041c320ab17592c6317abbfdf4bbaa98ca4"
+  version "6.0.3"
+  resolved "https://registry.yarnpkg.com/acorn/-/acorn-6.0.3.tgz#52adffeb02757f06420085a0ed0f7c0baf55fdf4"
 
 ajv@^5.3.0:
   version "5.5.2"
@@ -1435,8 +1439,8 @@ got@^6.7.1:
     url-parse-lax "^1.0.0"
 
 graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.6:
-  version "4.1.11"
-  resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.1.11.tgz#0e8bdfe4d1ddb8854d64e04ea7c00e2a026e5658"
+  version "4.1.14"
+  resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.1.14.tgz#1b6e8362ef8c5ecb5da799901f39297e3054773a"
 
 "growl@~> 1.10.0":
   version "1.10.5"
@@ -3466,9 +3470,9 @@ rollup-pluginutils@^2.3.1, rollup-pluginutils@^2.3.3:
     estree-walker "^0.5.2"
     micromatch "^2.3.11"
 
-rollup@^0.66.6:
-  version "0.66.6"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.66.6.tgz#ce7d6185beb7acea644ce220c25e71ae03275482"
+rollup@^0.67.0:
+  version "0.67.0"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.67.0.tgz#16d4f259c55224dded6408e7666b7731500797a3"
   dependencies:
     "@types/estree" "0.0.39"
     "@types/node" "*"
@@ -3847,8 +3851,8 @@ term-size@^1.2.0:
     execa "^0.7.0"
 
 terser@^3.8.2:
-  version "3.10.8"
-  resolved "https://registry.yarnpkg.com/terser/-/terser-3.10.8.tgz#2fe3967396a10cdc3d575074fe857efd30a2895a"
+  version "3.10.11"
+  resolved "https://registry.yarnpkg.com/terser/-/terser-3.10.11.tgz#e063da74b194dde9faf0a561f3a438c549d2da3f"
   dependencies:
     commander "~2.17.1"
     source-map "~0.6.1"
@@ -3985,9 +3989,9 @@ tslint-consistent-codestyle@^1.14.0:
     tslib "^1.7.1"
     tsutils "^2.27.2"
 
-tslint-immutable@^4.9.0:
-  version "4.9.0"
-  resolved "https://registry.yarnpkg.com/tslint-immutable/-/tslint-immutable-4.9.0.tgz#dcb3b7ea9173ddcc524d35f3c0adfa21516c75cf"
+tslint-immutable@^4.9.1:
+  version "4.9.1"
+  resolved "https://registry.yarnpkg.com/tslint-immutable/-/tslint-immutable-4.9.1.tgz#ca4555d04c3995c92c912b9e57502d423151002c"
 
 tslint-microsoft-contrib@^5.2.1:
   version "5.2.1"
@@ -4037,8 +4041,8 @@ tsutils@^2.27.2:
     tslib "^1.8.1"
 
 tsutils@^3.1.0:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.2.0.tgz#bb2a7e2f34331f1dbd9fbe04ac0886524ae11e36"
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.3.0.tgz#014e0277ab59e8a059226785b843c5348cbffd83"
   dependencies:
     tslib "^1.8.1"
 

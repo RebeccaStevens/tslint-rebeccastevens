@@ -10,7 +10,7 @@ import * as _parseIcov from 'lcov-parse';
 import { outputFile } from 'fs-extra';
 import { promisify } from 'util';
 
-const parseIcov = promisify<any, any>(_parseIcov);
+const parseIcov = promisify(_parseIcov as (file: string, cb: (error: Error, data: ReadonlyArray<CoverageReportData>) => void) => void);
 
 interface FileToReport {
   readonly [filename: string]: CoverageReportData;
@@ -20,18 +20,38 @@ interface ReportsByFile {
   readonly [filename: string]: ReadonlyArray<CoverageReportData>;
 }
 
-type CoverageReports = ReadonlyArray<{
-  readonly [key: string]: CoverageReportData;
-}>;
+interface CoverageReportData {
+  readonly title: string;
+  readonly file: string;
+  readonly functions: CoverageReportBlockData<{
+    readonly name: string;
+    readonly line: number;
+    readonly hit: number;
+  }>;
+  readonly lines: CoverageReportBlockData<{
+    readonly line: number;
+    readonly hit: number;
+  }>;
+  readonly branches: CoverageReportBlockData<{
+    readonly line: number;
+    readonly block: number;
+    readonly branch: number;
+    readonly taken: number;
+  }>;
+}
 
-type CoverageReportData = any;
+interface CoverageReportBlockData<Detail> {
+  readonly hit: number;
+  readonly found: number;
+  readonly details: ReadonlyArray<Detail>;
+}
 
 (async () => {
   const coverageReportFiles = await glob('coverage/*/lcov.info');
 
   const coverageReports = await Promise.all(
     coverageReportFiles.map(
-      async (file) => (parseIcov(file) as unknown) as CoverageReports
+      async (file) => parseIcov(file)
     )
   );
 
@@ -50,7 +70,9 @@ type CoverageReportData = any;
       return Object.keys(fileToReport)
         .reduce((merged, filename) => {
           const previousFileCoverages =
-            merged[filename] === undefined ? [] : merged[filename];
+            (merged as object)[filename] === undefined
+            ? []
+            : merged[filename];
 
           return {
             ...merged,
@@ -63,13 +85,14 @@ type CoverageReportData = any;
 
   const mergedReports = Object.keys(reportsByFile)
     .reduce<FileToReport>((merged, reportsKey) => {
-      const mergedReport = coverageMerger.merge(reportsByFile[reportsKey]);
       return {
         ...merged,
-        [reportsKey]: mergedReport
+        // tslint:disable-next-line:no-unsafe-any
+        [reportsKey]: coverageMerger.merge(reportsByFile[reportsKey])
       };
     }, {});
 
+  // tslint:disable-next-line:no-unsafe-any
   await outputFile('coverage/lcov.info', coverageToLcov(mergedReports));
 })()
   .catch((error) => {
