@@ -1,34 +1,20 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "rootDir": ".",
-    "moduleResolution": "node",
-    "lib": ["esnext"],
-    "types": [
-      "node"
-    ],
-    "typeRoots": [
-      "node_modules"
-    ],
-
     // Coding style
-    "forceConsistentCasingInFileNames": true,
-    "newLine": "LF",
-    "noEmitOnError": true,
     "noFallthroughCasesInSwitch": false,
     "noImplicitAny": false,
     "noImplicitReturns": false,
     "noImplicitThis": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "strictNullChecks": true,
 
     // Output
+    "noEmitOnError": true,
     "module": "commonjs",
     "target": "es5",
-    "sourceMap": false,
-    "outDir": "rules",
-    "removeComments": true
+    "removeComments": true,
+    "isolatedModules": false
   },
   "include": ["**/*.ts"],
   "exclude": ["src/**/*.ts"]
