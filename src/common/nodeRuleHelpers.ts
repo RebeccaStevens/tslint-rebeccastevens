@@ -168,6 +168,7 @@ export function parseOptions<TOptions extends RuleOptions>(
 ): TOptions {
   return ruleArguments.reduce<TOptions>(
     (options, arg) => {
+      // tslint:disable-next-line:switch-default
       switch (typeof arg) {
         case 'string':
           return {
@@ -187,9 +188,6 @@ export function parseOptions<TOptions extends RuleOptions>(
                 } as TOptions;
               }, {} as TOptions) as {})
           } as TOptions;
-
-        default:
-          return options;
       }
     },
     {} as TOptions
