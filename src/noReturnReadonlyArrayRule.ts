@@ -14,9 +14,9 @@ import * as ts from 'typescript';
 import {
   createNodeTypedRule,
   InvalidNode,
+  isFunctionLikeAndTyped,
   markAsInvalidNode,
-  TsSyntaxFunction,
-  TsSyntaxFunctionTyped
+  TsSyntaxSignatureDeclarationTyped
 } from './common/nodeRuleHelpers';
 import * as Options from './common/options';
 
@@ -52,25 +52,14 @@ function getInvalidNodes(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker
 ): Array<InvalidNode> {
-  if (!(
-    node.kind === ts.SyntaxKind.FunctionDeclaration ||
-    node.kind === ts.SyntaxKind.FunctionExpression ||
-    node.kind === ts.SyntaxKind.ArrowFunction ||
-    node.kind === ts.SyntaxKind.MethodDeclaration
-  )) {
+  if (!isFunctionLikeAndTyped(node)) {
     return [];
   }
-  const func = node as TsSyntaxFunction;
 
-  if (func.type === undefined) {
-    return [];
-  }
-  const typedFunction = func as TsSyntaxFunctionTyped;
-
-  if (typedFunction.type.kind === ts.SyntaxKind.TypeReference) {
+  if (ts.isTypeReferenceNode(node.type)) {
     const invalidTypeReferenceNodes =
       getInvalidTypeReferenceNodes(
-        typedFunction.type as ts.TypeReferenceNode,
+        node.type,
         ctx,
         checker,
         failureMessageDefault
@@ -83,7 +72,7 @@ function getInvalidNodes(
 
   if (Boolean(ctx.options.deep)) {
     const deepInvalidNodes =
-      getDeepInvalidNodes(node, ctx, checker, typedFunction);
+      getDeepInvalidNodes(node, ctx, checker, node);
 
     if (deepInvalidNodes.length > 0) {
       return deepInvalidNodes;
@@ -100,11 +89,11 @@ function getDeepInvalidNodes(
   _node: ts.Node,
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
-  typedFunction: TsSyntaxFunctionTyped
+  typedSignatureDeclaration: TsSyntaxSignatureDeclarationTyped
 ): Array<InvalidNode> {
-  if (typedFunction.type.kind === ts.SyntaxKind.TypeLiteral) {
+  if (ts.isTypeLiteralNode(typedSignatureDeclaration.type)) {
     const invalidTypeLiteralNodes = getInvalidTypeLiteralNodes(
-      typedFunction.type as ts.TypeLiteralNode,
+      typedSignatureDeclaration.type,
       ctx,
       checker
     );
@@ -114,9 +103,9 @@ function getDeepInvalidNodes(
     }
   }
 
-  if (typedFunction.type.kind === ts.SyntaxKind.TupleType) {
+  if (ts.isTupleTypeNode(typedSignatureDeclaration.type)) {
     const invalidTupleTypeNodes = getInvalidTupleTypeNodes(
-      typedFunction.type as ts.TupleTypeNode,
+      typedSignatureDeclaration.type,
       ctx,
       checker
     );
@@ -142,35 +131,26 @@ function getInvalidPropertySignatureNodes(
     return [];
   }
 
-  switch (propertySignature.type.kind) {
-    case ts.SyntaxKind.TypeReference:
-      return getInvalidTypeReferenceNodes(
-        propertySignature.type as ts.TypeReferenceNode,
-        ctx,
-        checker,
-        failureMessageDeep,
-        nodeToMark
-      );
-
-    case ts.SyntaxKind.TypeLiteral:
-      return getInvalidTypeLiteralNodes(
-        propertySignature.type as ts.TypeLiteralNode,
-        ctx,
-        checker,
-        nodeToMark
-      );
-
-    case ts.SyntaxKind.TupleType:
-      return getInvalidTupleTypeNodes(
-        propertySignature.type as ts.TupleTypeNode,
-        ctx,
-        checker,
-        nodeToMark
-      );
-
-    default:
-      return [];
+  if (ts.isTypeReferenceNode(propertySignature.type)) {
+    return getInvalidTypeReferenceNodes(
+      propertySignature.type,
+      ctx,
+      checker,
+      failureMessageDeep,
+      nodeToMark
+    );
   }
+
+  if (ts.isTypeLiteralNode(propertySignature.type)) {
+    return getInvalidTypeLiteralNodes(
+      propertySignature.type,
+      ctx,
+      checker,
+      nodeToMark
+    );
+  }
+
+  return [];
 }
 
 /**
@@ -193,35 +173,18 @@ function getInvalidTupleTypeNodes(
      */
     ([] as ReadonlyArray<InvalidNode>).concat(
       ...tuple.elementTypes.map((element) => {
-        switch (element.kind) {
-          case ts.SyntaxKind.TypeReference:
-            return getInvalidTypeReferenceNodes(
-              element as ts.TypeReferenceNode,
-              ctx,
-              checker,
-              failureMessageDeep,
-              nodeToMark
-            );
 
-          case ts.SyntaxKind.TypeLiteral:
-            return getInvalidTypeLiteralNodes(
-              element as ts.TypeLiteralNode,
-              ctx,
-              checker,
-              nodeToMark
-            );
-
-          case ts.SyntaxKind.TupleType:
-            return getInvalidTupleTypeNodes(
-              element as ts.TupleTypeNode,
-              ctx,
-              checker,
-              nodeToMark
-            );
-
-          default:
-            return [];
+        if (ts.isTypeReferenceNode(element)) {
+          return getInvalidTypeReferenceNodes(
+            element,
+            ctx,
+            checker,
+            failureMessageDeep,
+            nodeToMark
+          );
         }
+
+        return [];
       })
     )
     // Filter out duplicates.
@@ -248,40 +211,40 @@ function getInvalidTypeReferenceNodes(
   failureMessage: string,
   nodeToMark?: ts.Node
 ): Array<InvalidNode> {
-  if (typeReference.typeName.kind === ts.SyntaxKind.Identifier) {
-    if (typeReference.typeName.text === 'ReadonlyArray') {
-      return [
-        markAsInvalidNode(
-          nodeToMark === undefined
-          ? typeReference
-          : nodeToMark,
-          failureMessage
-        )
-      ];
-    }
-
-    if (Boolean(ctx.options.includeTypeArguments)) {
-      const invalidTypeArgumentNodes = getInvalidTypeArgumentNodes(
-        typeReference,
-        checker,
-        failureMessageType,
-        nodeToMark
-      );
-
-      if (invalidTypeArgumentNodes.length > 0) {
-        return invalidTypeArgumentNodes;
-      }
-    }
-
-    return getInvalidTypeReferenceNodesWithTypeChecking(
-      typeReference,
-      ctx,
-      checker,
-      nodeToMark
-    );
+  if (!ts.isIdentifier(typeReference.typeName)) {
+    return [];
   }
 
-  return [];
+  if (typeReference.typeName.text === 'ReadonlyArray') {
+    return [
+      markAsInvalidNode(
+        nodeToMark === undefined
+        ? typeReference
+        : nodeToMark,
+        failureMessage
+      )
+    ];
+  }
+
+  if (Boolean(ctx.options.includeTypeArguments)) {
+    const invalidTypeArgumentNodes = getInvalidTypeArgumentNodes(
+      typeReference,
+      checker,
+      failureMessageType,
+      nodeToMark
+    );
+
+    if (invalidTypeArgumentNodes.length > 0) {
+      return invalidTypeArgumentNodes;
+    }
+  }
+
+  return getInvalidTypeReferenceNodesWithTypeChecking(
+    typeReference,
+    ctx,
+    checker,
+    nodeToMark
+  );
 }
 
 /**
@@ -308,6 +271,7 @@ function getInvalidTypeReferenceNodesWithTypeChecking(
       checker,
       nodeToMark
     );
+
   if (invalidTypeReferenceNodesUsingNodeType.length > 0) {
     return invalidTypeReferenceNodesUsingNodeType;
   }
@@ -320,6 +284,7 @@ function getInvalidTypeReferenceNodesWithTypeChecking(
       checker,
       nodeToMark
     );
+
   if (invalidTypeReferenceNodesUsingTypeAlias.length > 0) {
     return invalidTypeReferenceNodesUsingTypeAlias;
   }
@@ -340,42 +305,31 @@ function getInvalidTypeReferenceNodesUsingNodeType(
 ): Array<InvalidNode> {
   const typeReferenceTypeNode = checker.typeToTypeNode(typeReferenceType);
 
-  if (typeReferenceTypeNode !== undefined) {
-    switch (typeReferenceTypeNode.kind) {
-      case ts.SyntaxKind.TypeReference:
-        return getInvalidTypeReferenceNodes(
-          typeReferenceTypeNode as ts.TypeReferenceNode,
-          ctx,
-          checker,
-          failureMessageDeep,
-          nodeToMark === undefined
-          ? typeReference
-          : nodeToMark
-        );
+  if (typeReferenceTypeNode === undefined) {
+    return [];
+  }
 
-      case ts.SyntaxKind.TypeLiteral:
-        return getInvalidTypeLiteralNodes(
-          typeReferenceTypeNode as ts.TypeLiteralNode,
-          ctx,
-          checker,
-          nodeToMark === undefined
-          ? typeReference
-          : nodeToMark
-        );
+  if (ts.isTypeReferenceNode(typeReferenceTypeNode)) {
+    return getInvalidTypeReferenceNodes(
+      typeReferenceTypeNode,
+      ctx,
+      checker,
+      failureMessageDeep,
+      nodeToMark === undefined
+      ? typeReference
+      : nodeToMark
+    );
+  }
 
-      case ts.SyntaxKind.TupleType:
-        return getInvalidTupleTypeNodes(
-          typeReferenceTypeNode as ts.TupleTypeNode,
-          ctx,
-          checker,
-          nodeToMark === undefined
-          ? typeReference
-          : nodeToMark
-        );
-
-      default:
-        return [];
-    }
+  if (ts.isTupleTypeNode(typeReferenceTypeNode)) {
+    return getInvalidTupleTypeNodes(
+      typeReferenceTypeNode,
+      ctx,
+      checker,
+      nodeToMark === undefined
+      ? typeReference
+      : nodeToMark
+    );
   }
 
   return [];
@@ -395,23 +349,19 @@ function getInvalidTypeReferenceNodesUsingTypeAlias(
   if (typeReferenceType.aliasSymbol !== undefined) {
     return ([] as ReadonlyArray<InvalidNode>).concat(
       ...typeReferenceType.aliasSymbol.declarations.map((declaration) => {
-        if (declaration.kind === ts.SyntaxKind.TypeAliasDeclaration) {
-          const typeAliasDeclaration = declaration as ts.TypeAliasDeclaration;
-
-          switch (typeAliasDeclaration.type.kind) {
-            case ts.SyntaxKind.TypeLiteral:
-              return getInvalidTypeLiteralNodes(
-                typeAliasDeclaration.type as ts.TypeLiteralNode,
-                ctx,
-                checker,
-                nodeToMark === undefined
-                ? typeReference
-                : nodeToMark
-              );
-
-            default:
-              return [];
+        if (ts.isTypeAliasDeclaration(declaration)) {
+          if (ts.isTypeLiteralNode(declaration.type)) {
+            return getInvalidTypeLiteralNodes(
+              declaration.type,
+              ctx,
+              checker,
+              nodeToMark === undefined
+              ? typeReference
+              : nodeToMark
+            );
           }
+
+          return [];
         }
         return [];
       })
@@ -433,18 +383,16 @@ function getInvalidTypeLiteralNodes(
   return (
     ([] as ReadonlyArray<InvalidNode>).concat(
       ...typeLiteral.members.map((member) => {
-        switch (member.kind) {
-          case ts.SyntaxKind.PropertySignature:
-            return getInvalidPropertySignatureNodes(
-              member as ts.PropertySignature,
-              ctx,
-              checker,
-              nodeToMark
-            );
-
-          default:
-            return [];
+        if (ts.isPropertySignature(member)) {
+          return getInvalidPropertySignatureNodes(
+            member,
+            ctx,
+            checker,
+            nodeToMark
+          );
         }
+
+        return [];
       })
     )
   );
@@ -466,25 +414,23 @@ function getInvalidTypeArgumentNodes(
   return (
     ([] as ReadonlyArray<InvalidNode>).concat(
       ...typeReference.typeArguments.map((argument) => {
-        if (argument.kind !== ts.SyntaxKind.TypeReference) {
+        if (!ts.isTypeReferenceNode(argument)) {
           return [];
         }
 
-        const typeReferenceArgument = argument as ts.TypeReferenceNode;
-
         if (
-          typeReferenceArgument.typeName.kind === ts.SyntaxKind.Identifier &&
-          typeReferenceArgument.typeName.text === 'ReadonlyArray'
+          ts.isIdentifier(argument.typeName) &&
+          argument.typeName.text === 'ReadonlyArray'
         ) {
           return [
             markAsInvalidNode(
               nodeToMark === undefined
-              ? typeReferenceArgument
+              ? argument
               : nodeToMark,
               failureMessage
             ),
             ...getInvalidTypeArgumentNodes(
-              typeReferenceArgument,
+              argument,
               checker,
               failureMessage,
               nodeToMark
@@ -493,7 +439,7 @@ function getInvalidTypeArgumentNodes(
         }
 
         return getInvalidTypeArgumentNodes(
-          typeReferenceArgument,
+          argument,
           checker,
           failureMessage,
           nodeToMark
