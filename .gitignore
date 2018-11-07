@@ -9,7 +9,7 @@ node_modules/
 /tslint.json
 /ruleset-*.json
 /.nyc_output
-/coverage
+/coverage*
 /src/**/*.js
 /src/**/*.js.map
 /.jest

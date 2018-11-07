@@ -1,0 +1,11 @@
+verbose: false
+reporting:
+  print: summary
+  reports:
+    - lcov
+  dir: ./coverage
+  watermarks:
+    branches: [80, 95]
+    functions: [90, 98]
+    lines: [80, 95]
+    statements: [80, 95]

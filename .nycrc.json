@@ -1,12 +1,6 @@
 {
   "check-coverage": false,
   "per-file": true,
-  "watermarks": {
-    "lines": [80, 95],
-    "functions": [90, 98],
-    "branches": [80, 95],
-    "statements": [80, 95]
-  },
   "include": [
     "src/**/*"
   ],
@@ -17,9 +11,9 @@
     ".ts"
   ],
   "reporter": [
-    "lcov"
+    "json"
   ],
   "cache": false,
   "all": true,
-  "report-dir": "./coverage/nyc"
+  "report-dir": "coverage-partial/nyc"
 }
