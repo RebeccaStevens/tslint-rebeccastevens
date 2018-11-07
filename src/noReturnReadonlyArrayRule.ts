@@ -172,20 +172,17 @@ function getInvalidTupleTypeNodes(
      *       Once this has been fixed, the filter function below can be removed.
      */
     ([] as ReadonlyArray<InvalidNode>).concat(
-      ...tuple.elementTypes.map((element) => {
-
-        if (ts.isTypeReferenceNode(element)) {
-          return getInvalidTypeReferenceNodes(
+      ...tuple.elementTypes.map((element) =>
+        ts.isTypeReferenceNode(element)
+        ? getInvalidTypeReferenceNodes(
             element,
             ctx,
             checker,
             failureMessageDeep,
             nodeToMark
-          );
-        }
-
-        return [];
-      })
+          )
+        : []
+      )
     )
     // Filter out duplicates.
     .filter((item) => {
@@ -305,6 +302,8 @@ function getInvalidTypeReferenceNodesUsingNodeType(
 ): Array<InvalidNode> {
   const typeReferenceTypeNode = checker.typeToTypeNode(typeReferenceType);
 
+  // This should never be undefined.
+  // istanbul ignore next
   if (typeReferenceTypeNode === undefined) {
     return [];
   }
@@ -348,23 +347,21 @@ function getInvalidTypeReferenceNodesUsingTypeAlias(
 ): Array<InvalidNode> {
   if (typeReferenceType.aliasSymbol !== undefined) {
     return ([] as ReadonlyArray<InvalidNode>).concat(
-      ...typeReferenceType.aliasSymbol.declarations.map((declaration) => {
-        if (ts.isTypeAliasDeclaration(declaration)) {
-          if (ts.isTypeLiteralNode(declaration.type)) {
-            return getInvalidTypeLiteralNodes(
-              declaration.type,
-              ctx,
-              checker,
-              nodeToMark === undefined
-              ? typeReference
-              : nodeToMark
-            );
-          }
-
-          return [];
-        }
-        return [];
-      })
+      ...typeReferenceType.aliasSymbol.declarations.map((declaration) =>
+        (
+          ts.isTypeAliasDeclaration(declaration) &&
+          ts.isTypeLiteralNode(declaration.type)
+        )
+        ? getInvalidTypeLiteralNodes(
+            declaration.type,
+            ctx,
+            checker,
+            nodeToMark === undefined
+            ? typeReference
+            : nodeToMark
+          )
+        : []
+      )
     );
   }
 
@@ -382,18 +379,16 @@ function getInvalidTypeLiteralNodes(
 ): Array<InvalidNode> {
   return (
     ([] as ReadonlyArray<InvalidNode>).concat(
-      ...typeLiteral.members.map((member) => {
-        if (ts.isPropertySignature(member)) {
-          return getInvalidPropertySignatureNodes(
+      ...typeLiteral.members.map((member) =>
+        ts.isPropertySignature(member)
+        ? getInvalidPropertySignatureNodes(
             member,
             ctx,
             checker,
             nodeToMark
-          );
-        }
-
-        return [];
-      })
+          )
+        : []
+      )
     )
   );
 }
