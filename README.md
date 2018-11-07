@@ -51,9 +51,7 @@ This rule set is a useful starting point for a new project.
 
 This rule prevents the type `ReadonlyArray<T>` from being returned from a function.
 
-Functions should not rely on their return type being of type `ReadonlyArray<T>` to prevent mutation as 3rd parties are still able to modify it. If a function needs to ensure the array it returns is immutable, it should use [`Object.freeze`][object.freeze-link].
-
-Also note that values of type `ReadonlyArray<T>` cannot be provided to functions expecting a value of type `Array<T>`.
+Note: Values of type `ReadonlyArray<T>` cannot be provided to functions expecting a value of type `Array<T>`.
 
 *Example:*
 
