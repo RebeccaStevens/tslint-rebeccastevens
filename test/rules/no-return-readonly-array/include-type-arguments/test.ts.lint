@@ -17,7 +17,7 @@ function test(): IFoo<ReadonlyArray<number>, ReadonlyArray<number>> {
   };
 }
 
-function test(): IFoo<Promise<ReadonlyArray<number>>,number> {
+function test(): IFoo<Promise<ReadonlyArray<number>>, number> {
                               ~~~~~~~~~~~~~~~~~~~~~ [failure]
   return {
     a: Promise.resolve([0, 1, 2])

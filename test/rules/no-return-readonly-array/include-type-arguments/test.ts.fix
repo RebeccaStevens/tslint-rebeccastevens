@@ -1,0 +1,30 @@
+interface IFoo<T1, T2> {
+  a: T1;
+  b: T2;
+}
+
+async function test(): Promise<Array<number>> {
+  return Promise.resolve([0, 1, 2]);
+}
+
+function test(): IFoo<Array<number>, Array<number>> {
+  return {
+    a: [0, 1, 2]
+    b: [3, 4, 5]
+  };
+}
+
+function test(): IFoo<Promise<Array<number>>, number> {
+  return {
+    a: Promise.resolve([0, 1, 2])
+    b: [3, 4, 5]
+  };
+}
+
+function* test(): IterableIterator<Array<number>> {
+  let value = 0;
+  while (true) {
+    yield [value++];
+  }
+}
+

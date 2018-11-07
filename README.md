@@ -47,6 +47,7 @@ This rule set is a useful starting point for a new project.
 ### no-return-readonly-array
 
 [![type-info-badge]][type-info-link]
+[![has-fixer-badge]][has-fixer-link]
 
 This rule prevents the type `ReadonlyArray<T>` from being returned from a function.
 
@@ -117,4 +118,5 @@ https://img.shields.io/coveralls/github/RebeccaStevens/tslint-rebeccastevens/mas
 [coverage-link]: https://coveralls.io/github/RebeccaStevens/tslint-rebeccastevens?branch=master
 [license-link]: https://opensource.org/licenses/BSD-3-Clause
 [type-info-link]: https://palantir.github.io/tslint/usage/type-checking
+[has-fixer-link]: #
 [object.freeze-link]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze

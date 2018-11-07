@@ -33,6 +33,8 @@ const failureMessageType =
 const failureMessageDeep =
   'Do not return a ReadonlyArray within the result; use an Array instead.';
 
+const readonlyArrayType = 'ReadonlyArray';
+
 /**
  * The `no-return-readonly-array-rule`.
  */
@@ -62,7 +64,8 @@ function getInvalidNodes(
         node.type,
         ctx,
         checker,
-        failureMessageDefault
+        failureMessageDefault,
+        true
       );
 
     if (invalidTypeReferenceNodes.length > 0) {
@@ -72,7 +75,7 @@ function getInvalidNodes(
 
   if (Boolean(ctx.options.deep)) {
     const deepInvalidNodes =
-      getDeepInvalidNodes(node, ctx, checker, node);
+      getDeepInvalidNodes(node, ctx, checker, true);
 
     if (deepInvalidNodes.length > 0) {
       return deepInvalidNodes;
@@ -86,16 +89,17 @@ function getInvalidNodes(
  * Does one of the given node's child nodes invalidate this rule?
  */
 function getDeepInvalidNodes(
-  _node: ts.Node,
+  node: TsSyntaxSignatureDeclarationTyped,
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
-  typedSignatureDeclaration: TsSyntaxSignatureDeclarationTyped
+  safeToReplace: boolean
 ): Array<InvalidNode> {
-  if (ts.isTypeLiteralNode(typedSignatureDeclaration.type)) {
+  if (ts.isTypeLiteralNode(node.type)) {
     const invalidTypeLiteralNodes = getInvalidTypeLiteralNodes(
-      typedSignatureDeclaration.type,
+      node.type,
       ctx,
-      checker
+      checker,
+      safeToReplace
     );
 
     if (invalidTypeLiteralNodes.length > 0) {
@@ -103,11 +107,12 @@ function getDeepInvalidNodes(
     }
   }
 
-  if (ts.isTupleTypeNode(typedSignatureDeclaration.type)) {
+  if (ts.isTupleTypeNode(node.type)) {
     const invalidTupleTypeNodes = getInvalidTupleTypeNodes(
-      typedSignatureDeclaration.type,
+      node.type,
       ctx,
-      checker
+      checker,
+      safeToReplace
     );
 
     if (invalidTupleTypeNodes.length > 0) {
@@ -122,30 +127,33 @@ function getDeepInvalidNodes(
  * Does the given property signature vialate this rule?
  */
 function getInvalidPropertySignatureNodes(
-  propertySignature: ts.PropertySignature,
+  node: ts.PropertySignature,
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
+  safeToReplace: boolean,
   nodeToMark?: ts.Node
 ): Array<InvalidNode> {
-  if (propertySignature.type === undefined) {
+  if (node.type === undefined) {
     return [];
   }
 
-  if (ts.isTypeReferenceNode(propertySignature.type)) {
+  if (ts.isTypeReferenceNode(node.type)) {
     return getInvalidTypeReferenceNodes(
-      propertySignature.type,
+      node.type,
       ctx,
       checker,
       failureMessageDeep,
+      safeToReplace,
       nodeToMark
     );
   }
 
-  if (ts.isTypeLiteralNode(propertySignature.type)) {
+  if (ts.isTypeLiteralNode(node.type)) {
     return getInvalidTypeLiteralNodes(
-      propertySignature.type,
+      node.type,
       ctx,
       checker,
+      safeToReplace,
       nodeToMark
     );
   }
@@ -157,9 +165,10 @@ function getInvalidPropertySignatureNodes(
  * Does the given tuple vialate this rule?
  */
 function getInvalidTupleTypeNodes(
-  tuple: ts.TupleTypeNode,
+  node: ts.TupleTypeNode,
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
+  safeToReplace: boolean,
   nodeToMark?: ts.Node
 ): Array<InvalidNode> {
   // tslint:disable-next-line:no-any
@@ -172,13 +181,14 @@ function getInvalidTupleTypeNodes(
      *       Once this has been fixed, the filter function below can be removed.
      */
     ([] as ReadonlyArray<InvalidNode>).concat(
-      ...tuple.elementTypes.map((element) =>
+      ...node.elementTypes.map((element) =>
         ts.isTypeReferenceNode(element)
         ? getInvalidTypeReferenceNodes(
             element,
             ctx,
             checker,
             failureMessageDeep,
+            safeToReplace,
             nodeToMark
           )
         : []
@@ -202,32 +212,36 @@ function getInvalidTupleTypeNodes(
  * Does the given type reference vialate this rule?
  */
 function getInvalidTypeReferenceNodes(
-  typeReference: ts.TypeReferenceNode,
+  node: ts.TypeReferenceNode,
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   failureMessage: string,
+  safeToReplace: boolean,
   nodeToMark?: ts.Node
 ): Array<InvalidNode> {
-  if (!ts.isIdentifier(typeReference.typeName)) {
+  if (!ts.isIdentifier(node.typeName)) {
     return [];
   }
 
-  if (typeReference.typeName.text === 'ReadonlyArray') {
+  if (node.typeName.text === readonlyArrayType) {
     return [
       markAsInvalidNode(
         nodeToMark === undefined
-        ? typeReference
+        ? node
         : nodeToMark,
-        failureMessage
+        failureMessage,
+        getFixReplacement(safeToReplace, node, readonlyArrayType, ctx)
       )
     ];
   }
 
   if (Boolean(ctx.options.includeTypeArguments)) {
     const invalidTypeArgumentNodes = getInvalidTypeArgumentNodes(
-      typeReference,
+      node,
+      ctx,
       checker,
       failureMessageType,
+      safeToReplace,
       nodeToMark
     );
 
@@ -237,7 +251,7 @@ function getInvalidTypeReferenceNodes(
   }
 
   return getInvalidTypeReferenceNodesWithTypeChecking(
-    typeReference,
+    node,
     ctx,
     checker,
     nodeToMark
@@ -249,7 +263,7 @@ function getInvalidTypeReferenceNodes(
  * (uses typechecking)
  */
 function getInvalidTypeReferenceNodesWithTypeChecking(
-  typeReference: ts.TypeReferenceNode,
+  node: ts.TypeReferenceNode,
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   nodeToMark?: ts.Node
@@ -258,11 +272,11 @@ function getInvalidTypeReferenceNodesWithTypeChecking(
     return [];
   }
 
-  const typeReferenceType = checker.getTypeFromTypeNode(typeReference);
+  const typeReferenceType = checker.getTypeFromTypeNode(node);
 
   const invalidTypeReferenceNodesUsingNodeType =
     getInvalidTypeReferenceNodesUsingNodeType(
-      typeReference,
+      node,
       typeReferenceType,
       ctx,
       checker,
@@ -275,7 +289,7 @@ function getInvalidTypeReferenceNodesWithTypeChecking(
 
   const invalidTypeReferenceNodesUsingTypeAlias =
     getInvalidTypeReferenceNodesUsingTypeAlias(
-      typeReference,
+      node,
       typeReferenceType,
       ctx,
       checker,
@@ -294,13 +308,13 @@ function getInvalidTypeReferenceNodesWithTypeChecking(
  * Checks against the node type.
  */
 function getInvalidTypeReferenceNodesUsingNodeType(
-  typeReference: ts.TypeReferenceNode,
-  typeReferenceType: ts.Type,
+  node: ts.TypeReferenceNode,
+  nodeType: ts.Type,
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   nodeToMark?: ts.Node
 ): Array<InvalidNode> {
-  const typeReferenceTypeNode = checker.typeToTypeNode(typeReferenceType);
+  const typeReferenceTypeNode = checker.typeToTypeNode(nodeType);
 
   // This should never be undefined.
   // istanbul ignore next
@@ -314,8 +328,9 @@ function getInvalidTypeReferenceNodesUsingNodeType(
       ctx,
       checker,
       failureMessageDeep,
+      false,
       nodeToMark === undefined
-      ? typeReference
+      ? node
       : nodeToMark
     );
   }
@@ -325,8 +340,9 @@ function getInvalidTypeReferenceNodesUsingNodeType(
       typeReferenceTypeNode,
       ctx,
       checker,
+      false,
       nodeToMark === undefined
-      ? typeReference
+      ? node
       : nodeToMark
     );
   }
@@ -339,15 +355,15 @@ function getInvalidTypeReferenceNodesUsingNodeType(
  * Checks against the type alias.
  */
 function getInvalidTypeReferenceNodesUsingTypeAlias(
-  typeReference: ts.TypeReferenceNode,
-  typeReferenceType: ts.Type,
+  node: ts.TypeReferenceNode,
+  nodeType: ts.Type,
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   nodeToMark?: ts.Node
 ): Array<InvalidNode> {
-  if (typeReferenceType.aliasSymbol !== undefined) {
+  if (nodeType.aliasSymbol !== undefined) {
     return ([] as ReadonlyArray<InvalidNode>).concat(
-      ...typeReferenceType.aliasSymbol.declarations.map((declaration) =>
+      ...nodeType.aliasSymbol.declarations.map((declaration) =>
         (
           ts.isTypeAliasDeclaration(declaration) &&
           ts.isTypeLiteralNode(declaration.type)
@@ -356,8 +372,9 @@ function getInvalidTypeReferenceNodesUsingTypeAlias(
             declaration.type,
             ctx,
             checker,
+            false,
             nodeToMark === undefined
-            ? typeReference
+            ? node
             : nodeToMark
           )
         : []
@@ -372,19 +389,21 @@ function getInvalidTypeReferenceNodesUsingTypeAlias(
  * Does the given type literal vialate this rule?
  */
 function getInvalidTypeLiteralNodes(
-  typeLiteral: ts.TypeLiteralNode,
+  node: ts.TypeLiteralNode,
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
+  safeToReplace: boolean,
   nodeToMark?: ts.Node
 ): Array<InvalidNode> {
   return (
     ([] as ReadonlyArray<InvalidNode>).concat(
-      ...typeLiteral.members.map((member) =>
+      ...node.members.map((member) =>
         ts.isPropertySignature(member)
         ? getInvalidPropertySignatureNodes(
             member,
             ctx,
             checker,
+            safeToReplace,
             nodeToMark
           )
         : []
@@ -397,37 +416,43 @@ function getInvalidTypeLiteralNodes(
  * Get the invalid nodes within the given type reference.
  */
 function getInvalidTypeArgumentNodes(
-  typeReference: ts.TypeReferenceNode,
+  node: ts.TypeReferenceNode,
+  ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   failureMessage: string,
+  safeToReplace: boolean,
   nodeToMark?: ts.Node
 ): Array<InvalidNode> {
-  if (typeReference.typeArguments === undefined) {
+  if (node.typeArguments === undefined) {
     return [];
   }
 
   return (
     ([] as ReadonlyArray<InvalidNode>).concat(
-      ...typeReference.typeArguments.map((argument) => {
+      ...node.typeArguments.map((argument) => {
         if (!ts.isTypeReferenceNode(argument)) {
           return [];
         }
 
         if (
           ts.isIdentifier(argument.typeName) &&
-          argument.typeName.text === 'ReadonlyArray'
+          argument.typeName.text === readonlyArrayType
         ) {
+
           return [
             markAsInvalidNode(
               nodeToMark === undefined
               ? argument
               : nodeToMark,
-              failureMessage
+              failureMessage,
+              getFixReplacement(safeToReplace, argument, readonlyArrayType, ctx)
             ),
             ...getInvalidTypeArgumentNodes(
               argument,
+              ctx,
               checker,
               failureMessage,
+              safeToReplace,
               nodeToMark
             )
           ];
@@ -435,11 +460,33 @@ function getInvalidTypeArgumentNodes(
 
         return getInvalidTypeArgumentNodes(
           argument,
+          ctx,
           checker,
           failureMessage,
+          safeToReplace,
           nodeToMark
         );
       })
     )
   );
+}
+
+/**
+ * Get the fix replacement for an invalid node.
+ */
+function getFixReplacement(
+  safeToReplace: boolean,
+  invalidNode: ts.TypeReferenceNode,
+  toReplace: string,
+  ctx: Lint.WalkContext<RuleOptions>
+): Array<Lint.Replacement> {
+  return safeToReplace && invalidNode.pos >= 0
+    ? [
+        new Lint.Replacement(
+          invalidNode.getStart(ctx.sourceFile),
+          toReplace.length,
+          'Array'
+        )
+      ]
+    : [];
 }

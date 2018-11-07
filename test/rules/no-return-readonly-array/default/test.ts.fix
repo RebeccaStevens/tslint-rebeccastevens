@@ -1,0 +1,18 @@
+function test(): Array<number> {
+  return [0, 1, 2];
+}
+
+const test = function(): Array<number> {
+  return [0, 1, 2];
+}
+
+const test = (): Array<number> => {
+  return [0, 1, 2];
+}
+
+class Test {
+  test(): Array<number> {
+    return [0, 1, 2];
+  }
+}
+
