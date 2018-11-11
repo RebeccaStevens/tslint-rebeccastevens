@@ -1,0 +1,6 @@
+{
+  "rulesDirectory": ["../../../../src"],
+  "rules": {
+    "ternary-format": true
+  }
+}

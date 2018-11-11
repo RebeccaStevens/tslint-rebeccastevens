@@ -41,6 +41,7 @@
     "prepublishOnly": "run-s lint test"
   },
   "dependencies": {
+    "deep-equal": "^1.0.1",
     "tslint-clean-code": "^0.2.9",
     "tslint-consistent-codestyle": "^1.14.0",
     "tslint-immutable": "^5.0.0",
@@ -49,6 +50,7 @@
     "tsutils": "^3.5.0"
   },
   "devDependencies": {
+    "@types/deep-equal": "^1.0.1",
     "@types/fs-extra": "^5.0.4",
     "@types/istanbul-lib-coverage": "^1.1.0",
     "@types/jest": "^23.3.9",
