@@ -4,7 +4,6 @@
 // @ts-check
 
 import rollupPluginCommonjs from 'rollup-plugin-commonjs';
-import rollupPluginJson from 'rollup-plugin-json';
 import rollupPluginNodeResolve from 'rollup-plugin-node-resolve';
 import { terser as rollupPluginTerser } from 'rollup-plugin-terser';
 import rollupPluginTypescript from 'rollup-plugin-typescript';
@@ -12,6 +11,7 @@ import rollupPluginTypescript from 'rollup-plugin-typescript';
 import glob from 'glob';
 
 import terserConfig from './terser.config';
+import commonjsConfig from './commonjs.config';
 
 export default {
   // All toplevel ts files in src are inputs.
@@ -34,9 +34,8 @@ export default {
 
   plugins: [
     rollupPluginNodeResolve(),
-    rollupPluginCommonjs(),
+    rollupPluginCommonjs(commonjsConfig),
     rollupPluginTypescript(),
-    rollupPluginJson(),
     rollupPluginTerser(terserConfig)
   ],
 
