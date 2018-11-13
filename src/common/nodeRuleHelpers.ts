@@ -53,13 +53,6 @@ interface RuleOptions {
   readonly [key: string]: unknown;
 }
 
-export type TsSyntaxSignatureDeclarationTyped =
-  ts.SignatureDeclaration
-  & {
-    // tslint:disable-next-line:no-reserved-keywords
-    readonly type: ts.TypeNode;
-  };
-
 /**
  * Create a Rule class from a rule function.
  */
@@ -231,11 +224,4 @@ export function markAsInvalidNode(
   replacements: ReadonlyArray<Lint.Replacement> = []
 ): InvalidNode {
   return { node, failureMessage, replacements };
-}
-
-/**
- * Is the given node a typed function node?
- */
-export function isFunctionLikeAndTyped(node: ts.Node): node is TsSyntaxSignatureDeclarationTyped {
-  return ts.isFunctionLike(node) && node.type !== undefined;
 }

@@ -14,30 +14,28 @@ import standardRuleSet from '../rulesets/standard';
 const writeStandard = fs.outputJson(
   'ruleset-standard.json',
   standardRuleSet,
-  {
-    spaces: 2
-  }
+  { spaces: 2 }
 );
 
 // Create the recommended rule set.
 const writeRecommended = fs.outputJson(
   'ruleset-recommended.json',
   recommendedRuleSet,
-  {
-    spaces: 2
-  }
+  { spaces: 2 }
 );
 
 // Create the tslint.json file for the project.
 const writeTslint = fs.outputJson(
   'tslint.json',
   {
-    ...recommendedRuleSet
+    ...recommendedRuleSet,
     // Add overrides here.
+    rules: {
+      ...recommendedRuleSet.rules,
+      'no-reserved-keywords': false
+    }
   },
-  {
-    spaces: 2
-  }
+  { spaces: 2 }
 );
 
 // Wait for all the promises to resolve.

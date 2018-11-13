@@ -44,7 +44,8 @@
     "tslint-consistent-codestyle": "^1.14.0",
     "tslint-immutable": "^4.9.1",
     "tslint-microsoft-contrib": "^5.2.1",
-    "tslint-sonarts": "^1.8.0"
+    "tslint-sonarts": "^1.8.0",
+    "tsutils": "^3.5.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^5.0.4",

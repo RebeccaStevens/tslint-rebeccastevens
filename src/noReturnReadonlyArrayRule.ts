@@ -12,11 +12,13 @@ import * as ts from 'typescript';
 import {
   createNodeTypedRule,
   InvalidNode,
-  isFunctionLikeAndTyped,
-  markAsInvalidNode,
-  TsSyntaxSignatureDeclarationTyped
+  markAsInvalidNode
 } from './common/nodeRuleHelpers';
 import * as Options from './common/options';
+import {
+  isTypedFunctionLikeDeclaration,
+  TypedFunctionLikeDeclaration
+} from './common/typeguard';
 
 type RuleOptions =
   & Options.IncludeTypeArguments
@@ -47,7 +49,7 @@ function ruleEntryPoint(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker
 ): Array<InvalidNode> {
-  if (!isFunctionLikeAndTyped(node)) {
+  if (!isTypedFunctionLikeDeclaration(node)) {
     return [];
   }
 
@@ -80,7 +82,7 @@ function ruleEntryPoint(
  * Does one of the given node's child nodes invalidate this rule?
  */
 function checkOptionDeep(
-  node: TsSyntaxSignatureDeclarationTyped,
+  node: TypedFunctionLikeDeclaration,
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   safeToReplace: boolean
