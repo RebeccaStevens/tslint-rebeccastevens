@@ -2,7 +2,7 @@
  * Merge coverage reports.
  */
 
-import * as fs from 'fs';
+import * as fs from 'fs-extra';
 import * as glob from 'glob-promise';
 import { createReporter } from 'istanbul-api';
 import { createCoverageMap } from 'istanbul-lib-coverage';
@@ -17,7 +17,7 @@ import * as yaml from 'js-yaml';
     coverageReportFiles.map(async (report) => import(`../${report}`))
   );
 
-  const istanbulConfig = yaml.safeLoad(fs.readFileSync('.istanbul.yml', 'utf-8'));
+  const istanbulConfig = yaml.safeLoad(await fs.readFile('.istanbul.yml', 'utf-8'));
 
   coverageReports.forEach((coverage) => {
     Object.keys(coverage)
