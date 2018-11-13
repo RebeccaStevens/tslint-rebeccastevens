@@ -4,9 +4,6 @@
   "include": [
     "src/**/*"
   ],
-  "exclude": [
-    "src/index.ts"
-  ],
   "extension": [
     ".ts"
   ],

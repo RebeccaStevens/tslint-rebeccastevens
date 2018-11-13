@@ -1,4 +1,8 @@
 verbose: false
+instrumentation:
+  excludes:
+    - src/index.ts
+    - src/common/typeguard.ts
 reporting:
   print: summary
   reports:
