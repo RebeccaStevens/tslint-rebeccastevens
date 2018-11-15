@@ -1,5 +1,5 @@
 /**
- * TODO: desc
+ * This rule ensure ternary operators are formated a certain way.
  */
 
 import * as Lint from 'tslint';
@@ -14,9 +14,10 @@ import {
   InvalidNode,
   markAsInvalidNode
 } from './common/nodeRuleHelpers';
+import * as Options from './common/options';
 
-// tslint:disable-next-line:interface-over-type-literal
-type RuleOptions = {};
+type RuleOptions =
+  & Options.AllowSingleLine;
 
 interface ConditionalExpressionLineAndCharacterInfo {
   readonly condition: StartAndEndInfo;
@@ -81,6 +82,13 @@ function checkNonNested(
   ctx: Lint.WalkContext<RuleOptions>,
   lineAndCharacterInfo: ConditionalExpressionLineAndCharacterInfo
 ): Array<InvalidNode> {
+  if (Boolean(ctx.options.allowSingleLine)) {
+    const onSingleLine = lineAndCharacterInfo.condition.start.line === lineAndCharacterInfo.whenFalse.end.line;
+    if (onSingleLine) {
+      return [];
+    }
+  }
+
   // tslint:disable:no-unnecessary-initializer no-let
   let siblingBeforeInfo: StartAndEndInfo | undefined = undefined;
   let foundNode = false;
@@ -102,21 +110,8 @@ function checkNonNested(
       ? false
       : (siblingBeforeInfo as StartAndEndInfo).end.line === lineAndCharacterInfo.condition.start.line;
 
-  // TODO: Make safe.
-  // BODY: Possable out of bounds exception.
-  const lineRanges = getLineRanges(ctx.sourceFile);
-  const lineRange = conditionOnSameLine
-    ? lineRanges[lineAndCharacterInfo.condition.start.line]
-    : lineRanges[lineAndCharacterInfo.condition.start.line - 1];
-  const line = ctx.sourceFile.text.substring(
-    lineRange.pos,
-    lineRange.pos + lineRange.contentLength
-  );
-  const indentEnd = line.search(/\S/);
-  const indentation =
-    indentEnd === -1
-      ? 0
-      : indentEnd;
+  const indentationLine = lineAndCharacterInfo.condition.start.line - (conditionOnSameLine ? 0 : 1);
+  const indentation = getIndentationOfLine(ctx, indentationLine);
 
   const idealCondition: StartAndEndInfo = {
     start: {
@@ -152,9 +147,15 @@ function checkNonNested(
     },
     end: {
       line: idealQuestionToken.end.line + (whenTrueLineCount - 1),
-      character: whenTrueLineCount === 1
-        ? idealQuestionToken.end.character + lineAndCharacterInfo.whenTrue.end.character - lineAndCharacterInfo.whenTrue.start.character + 1
-        : lineAndCharacterInfo.whenTrue.end.character
+      character:
+        whenTrueLineCount === 1
+          ? (
+              idealQuestionToken.end.character +
+              lineAndCharacterInfo.whenTrue.end.character -
+              lineAndCharacterInfo.whenTrue.start.character +
+              1
+            )
+          : lineAndCharacterInfo.whenTrue.end.character
     }
   };
 
@@ -181,9 +182,15 @@ function checkNonNested(
     },
     end: {
       line: idealColonToken.end.line + (whenFalseLineCount - 1),
-      character: whenFalseLineCount === 1
-        ? idealColonToken.end.character + lineAndCharacterInfo.whenFalse.end.character - lineAndCharacterInfo.whenFalse.start.character + 1
-        : lineAndCharacterInfo.whenFalse.end.character
+      character:
+        whenFalseLineCount === 1
+          ? (
+              idealColonToken.end.character +
+              lineAndCharacterInfo.whenFalse.end.character -
+              lineAndCharacterInfo.whenFalse.start.character +
+              1
+            )
+          : lineAndCharacterInfo.whenFalse.end.character
     }
   };
 
@@ -196,6 +203,27 @@ function checkNonNested(
   };
 
   return compareIdealToActual(node, ctx, ideal, lineAndCharacterInfo);
+}
+
+/**
+ * Get the indentation of the given line.
+ */
+function getIndentationOfLine(
+  ctx: Lint.WalkContext<Options.AllowSingleLine>,
+  indentationLine: number
+): number {
+  const lineRanges = getLineRanges(ctx.sourceFile);
+  if (indentationLine >= lineRanges.length || indentationLine < 0) {
+    return 0;
+  }
+  const lineRange = lineRanges[indentationLine];
+  const line = ctx.sourceFile.text.substring(lineRange.pos, lineRange.pos + lineRange.contentLength);
+  const indentEnd = line.search(/\S/);
+  return (
+    indentEnd === -1
+      ? 0
+      : indentEnd
+  );
 }
 
 /**

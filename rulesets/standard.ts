@@ -7,7 +7,8 @@ const rulesDirectory = './rules';
  * My Rules.
  */
 const rules: RuleConfig = {
-  'no-return-readonly-array': [true, 'include-type-arguments', 'deep']
+  'no-return-readonly-array': [true, 'include-type-arguments', 'deep'],
+  'ternary-format': [true, 'allow-single-line']
 };
 
 export default {

@@ -1,0 +1,32 @@
+const condition = true;
+
+const doX = () => {};
+const doY = () => {};
+
+const foo = 
+  condition
+    ? doX()
+    : doY();
+
+const foo = 
+  // Some comment
+  condition
+    // Some comment
+    ? doX()
+    // Some comment
+    : doY();
+
+const foo = 
+  condition
+    ? (
+        doX()
+      )
+    : (
+        doY()
+      );
+
+const foo = 
+  condition
+    ? doX()
+    : doY();
+

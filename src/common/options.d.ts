@@ -9,3 +9,7 @@ export interface Deep {
 export interface IncludeTypeArguments {
   readonly includeTypeArguments?: boolean;
 }
+
+export interface AllowSingleLine {
+  readonly allowSingleLine?: boolean;
+}

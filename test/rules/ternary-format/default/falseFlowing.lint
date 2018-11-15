@@ -1,0 +1,43 @@
+const condition = true;
+const conditionA = true;
+const conditionB = true;
+
+const doX = () => {};
+const doY = () => {};
+const doZ = () => {};
+
+const foo =
+    conditionA
+  ? doX()
+  : conditionB
+  ? doY()
+  : doZ();
+
+const foo = conditionA ? doX() : conditionB ? doY() : doZ();
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [failure]
+
+const foo =
+  conditionA
+  ~~~~~~~~~~
+    ? doX()
+~~~~~~~~~~~
+    : conditionB
+~~~~~~~~~~~~~~~~
+        ? doY()
+~~~~~~~~~~~~~~~
+        : doZ();
+~~~~~~~~~~~~~~~ [failure]
+
+const foo  =
+  conditionA
+  ~~~~~~~~~~
+  ? doX()
+~~~~~~~~~
+  : conditionB
+~~~~~~~~~~~~~~
+  ? doY()
+~~~~~~~~~
+  : doZ();
+~~~~~~~~~ [failure]
+
+[failure]: Incorrectly formatted ternary operator.

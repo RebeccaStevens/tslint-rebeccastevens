@@ -1,22 +1,29 @@
 const condition = true;
-const conditionA = true;
-const conditionB = true;
 
 const doX = () => {};
 const doY = () => {};
-const doX = () => {};
 
 const foo = 
   condition
     ? doX()
     : doY();
 
-const bar = 
-    conditionA
-  ? doX()
-  : conditionB
-  ? doY()
-  : doZ();
+const foo = 
+  // Some comment
+  condition
+    // Some comment
+    ? doX()
+    // Some comment
+    : doY();
+
+const foo = 
+  condition
+    ? (
+        doX()
+      )
+    : (
+        doY()
+      );
 
 const foo = condition ? doX() : doY();
             ~~~~~~~~~~~~~~~~~~~~~~~~~ [failure]
