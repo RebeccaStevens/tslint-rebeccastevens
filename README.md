@@ -67,6 +67,7 @@ This rule set is a useful starting point for a new project.
 Rules | Description
 ----- | -----------
 [no-return-readonly-array](./docs/no-return-readonly-array.md) | Prevents the type `ReadonlyArray<T>` from being returned from a function.
+[ternary-format](./docs/ternary-format.md) | Ensure ternary operators are formated nicely.
 
 <!-- Badge urls -->
 
