@@ -9,15 +9,9 @@ const foo =
     : doY();
 
 const foo = 
-  // Some comment
-  condition
-    // Some comment
-    ? doX()
-    // Some comment
-    : doY();
-
-const foo = 
-  condition
+  (
+    condition
+  )
     ? (
         doX()
       )
@@ -29,4 +23,36 @@ const foo =
   condition
     ? doX()
     : doY();
+
+const foo = 
+  condition
+    ? doX()
+    : doY();
+
+const foo = 
+  // Some comment
+  condition
+    ? doX()
+    : doY();
+
+const foo = 
+  condition
+    // Some comment
+    ? doX()
+    // Some comment
+    : doY();
+
+const foo = 
+  // a
+  condition // b
+    // c
+    ? doX() // d // e // f
+    // g
+    : doY() // h // i // j
+    // k;
+
+const foo = 
+  /* a */ condition /* b */
+    /* c */ ? doX() /* d */ /* e */
+    /* f */ : doY() /* g */ /* h */;
 

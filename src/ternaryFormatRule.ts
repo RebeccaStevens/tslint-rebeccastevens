@@ -15,11 +15,12 @@ import {
   markAsInvalidNode
 } from './common/nodeRuleHelpers';
 import * as Options from './common/options';
+import { getSiblingBefore } from './common/util';
 
 type RuleOptions =
   & Options.AllowSingleLine;
 
-interface ConditionalExpressionLineAndCharacterInfo {
+interface ConditionalExpressionInfo {
   readonly condition: StartAndEndInfo;
   readonly questionToken: StartAndEndInfo;
   readonly whenTrue: StartAndEndInfo;
@@ -33,9 +34,10 @@ interface StartAndEndInfo {
 }
 
 const failureMessage = 'Incorrectly formatted ternary operator.';
+const indentation = '  ';
 
 /**
- * The `ternary-indentation`.
+ * The `ternary-format`.
  */
 export const Rule = createNodeRule<RuleOptions>(ruleEntryPoint);
 
@@ -53,7 +55,7 @@ function ruleEntryPoint(
     const trueFlowing = isConditionalExpression(node.whenTrue);
     const falseFlowing = isConditionalExpression(node.whenFalse);
 
-    const lineAndCharacterInfo = getLineAndCharacterInfo(node, ctx);
+    const lineAndCharacterInfo = getLineAndCharacterInfo(node, ctx.sourceFile);
 
     if (!trueFlowing && !falseFlowing) {
       return {
@@ -80,144 +82,68 @@ function ruleEntryPoint(
 function checkNonNested(
   node: ts.ConditionalExpression,
   ctx: Lint.WalkContext<RuleOptions>,
-  lineAndCharacterInfo: ConditionalExpressionLineAndCharacterInfo
+  nodeInfo: ConditionalExpressionInfo
 ): Array<InvalidNode> {
   if (Boolean(ctx.options.allowSingleLine)) {
-    const onSingleLine = lineAndCharacterInfo.condition.start.line === lineAndCharacterInfo.whenFalse.end.line;
+    const onSingleLine = nodeInfo.condition.start.line === nodeInfo.whenFalse.end.line;
     if (onSingleLine) {
       return [];
     }
   }
 
-  // tslint:disable:no-unnecessary-initializer no-let
-  let siblingBeforeInfo: StartAndEndInfo | undefined = undefined;
-  let foundNode = false;
-  // tslint:enable:no-unnecessary-initializer no-let
-  node.parent.forEachChild((child) => {
-    if (child === node) {
-      foundNode = true;
-    } else if (!foundNode) {
-      siblingBeforeInfo = {
-        start: ts.getLineAndCharacterOfPosition(ctx.sourceFile, child.getStart()),
-        end: ts.getLineAndCharacterOfPosition(ctx.sourceFile, child.getEnd())
-      };
-    }
-  });
+  const condition = getIdealCondition(
+    node,
+    ctx.sourceFile,
+    nodeInfo.condition
+  );
 
-  const conditionOnSameLine =
-    // tslint:disable-next-line:strict-type-predicates
-    siblingBeforeInfo === undefined
-      ? false
-      : (siblingBeforeInfo as StartAndEndInfo).end.line === lineAndCharacterInfo.condition.start.line;
+  const questionToken = getIdealQuestionToken(
+    condition.end.line,
+    condition.start.character
+  );
 
-  const indentationLine = lineAndCharacterInfo.condition.start.line - (conditionOnSameLine ? 0 : 1);
-  const indentation = getIndentationOfLine(ctx, indentationLine);
+  const whenTrue = getIdealWhenTrue(
+    nodeInfo.whenTrue,
+    questionToken.end
+  );
 
-  const idealCondition: StartAndEndInfo = {
-    start: {
-      line: lineAndCharacterInfo.condition.start.line + (conditionOnSameLine ? 1 : 0),
-      character: indentation + 2
+  const colonToken = getIdealColonToken(
+    whenTrue.end.line,
+    questionToken
+  );
+
+  const whenFalse = getIdealWhenFalse(
+    nodeInfo.whenFalse,
+    colonToken.end
+  );
+
+  return compareIdealToActual(
+    node,
+    ctx.sourceFile,
+    {
+      condition,
+      questionToken,
+      whenTrue,
+      colonToken,
+      whenFalse
     },
-    end: {
-      line: lineAndCharacterInfo.condition.end.line + (conditionOnSameLine ? 1 : 0),
-      character: indentation + 2 + lineAndCharacterInfo.condition.end.character - lineAndCharacterInfo.condition.start.character
-    }
-  };
-
-  const idealQuestionToken: StartAndEndInfo = {
-    start: {
-      line: idealCondition.end.line + 1,
-      character: idealCondition.start.character + 2
-    },
-    end: {
-      line: idealCondition.end.line + 1,
-      character: idealCondition.start.character + 2 + 1
-    }
-  };
-
-  const whenTrueLineCount = (
-      lineAndCharacterInfo.whenTrue.end.line -
-      lineAndCharacterInfo.whenTrue.start.line
-    ) + 1;
-
-  const idealWhenTrue: StartAndEndInfo = {
-    start: {
-      line: idealQuestionToken.end.line,
-      character: idealQuestionToken.end.character + 1
-    },
-    end: {
-      line: idealQuestionToken.end.line + (whenTrueLineCount - 1),
-      character:
-        whenTrueLineCount === 1
-          ? (
-              idealQuestionToken.end.character +
-              lineAndCharacterInfo.whenTrue.end.character -
-              lineAndCharacterInfo.whenTrue.start.character +
-              1
-            )
-          : lineAndCharacterInfo.whenTrue.end.character
-    }
-  };
-
-  const idealColonToken: StartAndEndInfo = {
-    start: {
-      line: idealWhenTrue.end.line + (whenTrueLineCount > 1 ? 2 : 1),
-      character: idealQuestionToken.start.character
-    },
-    end: {
-      line: idealWhenTrue.end.line + (whenTrueLineCount > 1 ? 2 : 1),
-      character: idealQuestionToken.end.character
-    }
-  };
-
-  const whenFalseLineCount = (
-      lineAndCharacterInfo.whenFalse.end.line -
-      lineAndCharacterInfo.whenFalse.start.line
-    ) + 1;
-
-  const idealWhenFalse: StartAndEndInfo = {
-    start: {
-      line: idealColonToken.end.line,
-      character: idealColonToken.end.character + 1
-    },
-    end: {
-      line: idealColonToken.end.line + (whenFalseLineCount - 1),
-      character:
-        whenFalseLineCount === 1
-          ? (
-              idealColonToken.end.character +
-              lineAndCharacterInfo.whenFalse.end.character -
-              lineAndCharacterInfo.whenFalse.start.character +
-              1
-            )
-          : lineAndCharacterInfo.whenFalse.end.character
-    }
-  };
-
-  const ideal: ConditionalExpressionLineAndCharacterInfo = {
-    condition: idealCondition,
-    questionToken: idealQuestionToken,
-    whenTrue: idealWhenTrue,
-    colonToken: idealColonToken,
-    whenFalse: idealWhenFalse
-  };
-
-  return compareIdealToActual(node, ctx, ideal, lineAndCharacterInfo);
+    nodeInfo
+  );
 }
 
 /**
  * Get the indentation of the given line.
  */
 function getIndentationOfLine(
-  ctx: Lint.WalkContext<Options.AllowSingleLine>,
+  sourceFile: ts.SourceFile,
   indentationLine: number
 ): number {
-  const lineRanges = getLineRanges(ctx.sourceFile);
+  const lineRanges = getLineRanges(sourceFile);
   if (indentationLine >= lineRanges.length || indentationLine < 0) {
     return 0;
   }
   const lineRange = lineRanges[indentationLine];
-  const line = ctx.sourceFile.text.substring(lineRange.pos, lineRange.pos + lineRange.contentLength);
+  const line = sourceFile.text.substring(lineRange.pos, lineRange.pos + lineRange.contentLength);
   const indentEnd = line.search(/\S/);
   return (
     indentEnd === -1
@@ -231,9 +157,9 @@ function getIndentationOfLine(
  */
 function compareIdealToActual(
   node: ts.ConditionalExpression,
-  ctx: Lint.WalkContext<RuleOptions>,
-  ideal: ConditionalExpressionLineAndCharacterInfo,
-  actual: ConditionalExpressionLineAndCharacterInfo
+  sourceFile: ts.SourceFile,
+  ideal: ConditionalExpressionInfo,
+  actual: ConditionalExpressionInfo
 ): Array<InvalidNode> {
   if (deepEqual(ideal, actual, { strict: true })) {
     return [];
@@ -253,27 +179,28 @@ function compareIdealToActual(
   return [markAsInvalidNode(node, failureMessage, [
     new Lint.Replacement(
       ts.getPositionOfLineAndCharacter(
-        ctx.sourceFile,
+        sourceFile,
         actual.condition.start.line,
         actual.condition.start.character
       ),
       node.getText().length,
-
-      '\n'.repeat(conditionLinesAbove) +
-      ' '.repeat(conditionSpacesBefore) +
-      node.condition.getText() +
-      '\n'.repeat(questionTokenLinesAbove) +
-      ' '.repeat(questionTokenSpacesBefore) +
-      node.questionToken.getText() +
-      '\n'.repeat(whenTrueLinesAbove) +
-      ' '.repeat(whenTrueSpacesBefore) +
-      node.whenTrue.getText() +
-      '\n'.repeat(colonTokenLinesAbove) +
-      ' '.repeat(colonTokenSpacesBefore) +
-      node.colonToken.getText() +
-      '\n'.repeat(whenFalseLinesAbove) +
-      ' '.repeat(whenFalseSpacesBefore) +
-      node.whenFalse.getText()
+      (
+        '\n'.repeat(conditionLinesAbove) +
+        ' '.repeat(conditionSpacesBefore) +
+        node.condition.getText() +
+        '\n'.repeat(questionTokenLinesAbove) +
+        ' '.repeat(questionTokenSpacesBefore) +
+        node.questionToken.getText() +
+        '\n'.repeat(whenTrueLinesAbove) +
+        ' '.repeat(whenTrueSpacesBefore) +
+        node.whenTrue.getText() +
+        '\n'.repeat(colonTokenLinesAbove) +
+        ' '.repeat(colonTokenSpacesBefore) +
+        node.colonToken.getText() +
+        '\n'.repeat(whenFalseLinesAbove) +
+        ' '.repeat(whenFalseSpacesBefore) +
+        node.whenFalse.getText()
+      )
     )
   ])];
 }
@@ -283,28 +210,193 @@ function compareIdealToActual(
  */
 function getLineAndCharacterInfo(
   node: ts.ConditionalExpression,
-  ctx: Lint.WalkContext<RuleOptions>
-): ConditionalExpressionLineAndCharacterInfo {
+  sourceFile: ts.SourceFile
+): ConditionalExpressionInfo {
   return {
-    condition: {
-      start: ts.getLineAndCharacterOfPosition(ctx.sourceFile, node.condition.getStart()),
-      end: ts.getLineAndCharacterOfPosition(ctx.sourceFile, node.condition.getEnd())
+    condition: getStartAndEndInfo(node.condition, sourceFile),
+    questionToken: getStartAndEndInfo(node.questionToken, sourceFile),
+    whenTrue: getStartAndEndInfo(node.whenTrue, sourceFile),
+    colonToken: getStartAndEndInfo(node.colonToken, sourceFile),
+    whenFalse: getStartAndEndInfo(node.whenFalse, sourceFile)
+  };
+}
+
+/**
+ * Returns whether or not the given node is on the same line as the previous node.
+ */
+function isOnSameLineAsPreviousNode(
+  node: ts.Node,
+  nodeLine: number,
+  sourceFile: ts.SourceFile
+): boolean {
+  const siblingBefore = getSiblingBefore(node);
+  const siblingBeforeInfo =
+    siblingBefore === undefined
+      ? undefined
+      : getStartAndEndInfo(siblingBefore, sourceFile);
+
+  return (
+    siblingBeforeInfo === undefined
+      ? false
+      : siblingBeforeInfo.end.line === nodeLine
+  );
+}
+
+/**
+ * Get the start and end info for the given node.
+ */
+function getStartAndEndInfo(
+  node: ts.Node,
+  sourceFile: ts.SourceFile
+): StartAndEndInfo {
+  return ({
+    start: ts.getLineAndCharacterOfPosition(sourceFile, node.getStart()),
+    end: ts.getLineAndCharacterOfPosition(sourceFile, node.getEnd())
+  });
+}
+
+/**
+ * Whether or not there is a comment above the given node (line-wise).
+ */
+function isCommentAbove(
+  node: ts.Node,
+  sourceFile: ts.SourceFile
+): boolean {
+  const leadingCommentRange = ts.getLeadingCommentRanges(sourceFile.text, node.getFullStart());
+  return (
+    leadingCommentRange === undefined || leadingCommentRange.length === 0
+      ? false
+      : Boolean(leadingCommentRange[leadingCommentRange.length - 1].hasTrailingNewLine)
+  );
+}
+
+/**
+ * Get the ideal start and end info for the condition.
+ */
+function getIdealCondition(
+  node: ts.Node,
+  sourceFile: ts.SourceFile,
+  info: StartAndEndInfo
+): StartAndEndInfo {
+  const conditionOnSameLine = isOnSameLineAsPreviousNode(
+    node,
+    info.start.line,
+    sourceFile
+  );
+
+  const indentAmount = getIndentationOfLine(
+    sourceFile,
+    info.start.line - (conditionOnSameLine ? 0 : 1)
+  ) + (
+    isCommentAbove(node, sourceFile)
+      ? 0
+      : indentation.length
+  );
+
+  return {
+    start: {
+      line: info.start.line + (conditionOnSameLine ? 1 : 0),
+      character: indentAmount
     },
-    questionToken: {
-      start: ts.getLineAndCharacterOfPosition(ctx.sourceFile, node.questionToken.getStart()),
-      end: ts.getLineAndCharacterOfPosition(ctx.sourceFile, node.questionToken.getEnd())
+    end: {
+      line: info.end.line + (conditionOnSameLine ? 1 : 0),
+      character: indentAmount + info.end.character - info.start.character
+    }
+  };
+}
+
+/**
+ * Get the ideal start and end info for the question token.
+ */
+function getIdealQuestionToken(
+  conditionLine: number,
+  conditionIndentation: number
+): StartAndEndInfo {
+  return {
+    start: {
+      line: conditionLine + 1,
+      character: conditionIndentation + indentation.length
     },
-    whenTrue: {
-      start: ts.getLineAndCharacterOfPosition(ctx.sourceFile, node.whenTrue.getStart()),
-      end: ts.getLineAndCharacterOfPosition(ctx.sourceFile, node.whenTrue.getEnd())
+    end: {
+      line: conditionLine + 1,
+      character: conditionIndentation + indentation.length + 1
+    }
+  };
+}
+
+/**
+ * Get the ideal start and end info for the when true branch.
+ */
+function getIdealWhenTrue(
+  info: StartAndEndInfo,
+  questionTokenLineAndCharacter: ts.LineAndCharacter
+): StartAndEndInfo {
+  const lineCount = (info.end.line - info.start.line) + 1;
+
+  return {
+    start: {
+      line: questionTokenLineAndCharacter.line,
+      character: questionTokenLineAndCharacter.character + 1
     },
-    colonToken: {
-      start: ts.getLineAndCharacterOfPosition(ctx.sourceFile, node.colonToken.getStart()),
-      end: ts.getLineAndCharacterOfPosition(ctx.sourceFile, node.colonToken.getEnd())
+    end: {
+      line: questionTokenLineAndCharacter.line + lineCount - 1,
+      character:
+        lineCount === 1
+          ? (
+              questionTokenLineAndCharacter.character +
+              info.end.character -
+              info.start.character +
+              1
+            )
+          : info.end.character
+    }
+  };
+}
+
+/**
+ * Get the ideal start and end info for the colon token.
+ */
+function getIdealColonToken(
+  whenTrueLine: number,
+  questionTokenInfo: StartAndEndInfo
+): StartAndEndInfo {
+  return {
+    start: {
+      line: whenTrueLine + 1,
+      character: questionTokenInfo.start.character
     },
-    whenFalse: {
-      start: ts.getLineAndCharacterOfPosition(ctx.sourceFile, node.whenFalse.getStart()),
-      end: ts.getLineAndCharacterOfPosition(ctx.sourceFile, node.whenFalse.getEnd())
+    end: {
+      line: whenTrueLine + 1,
+      character: questionTokenInfo.end.character
+    }
+  };
+}
+
+/**
+ * Get the ideal start and end info for the when false branch.
+ */
+function getIdealWhenFalse(
+  info: StartAndEndInfo,
+  colonTokenLineAndCharacter: ts.LineAndCharacter
+): StartAndEndInfo {
+  const lineCount = (info.end.line - info.start.line) + 1;
+
+  return {
+    start: {
+      line: colonTokenLineAndCharacter.line,
+      character: colonTokenLineAndCharacter.character + 1
+    },
+    end: {
+      line: colonTokenLineAndCharacter.line + lineCount - 1,
+      character:
+        lineCount === 1
+          ? (
+              colonTokenLineAndCharacter.character +
+              info.end.character -
+              info.start.character +
+              1
+            )
+          : info.end.character
     }
   };
 }
