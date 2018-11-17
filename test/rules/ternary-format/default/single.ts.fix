@@ -1,77 +1,102 @@
 const condition = true;
 
-const doX = () => {};
-const doY = () => {};
+const getX = () => {};
+const getY = () => {};
 const bar = (a, b, c, d, e) => {};
 
 const foo = 
   condition
-    ? doX()
-    : doY();
+    ? getX()
+    : getY();
 
 const foo = 
   (
     condition
   )
     ? (
-        doX()
+        getX()
       )
     : (
-        doY()
+        getY()
       );
+
+const foo = bar(
+  condition
+    ? getX()
+    : getY(), 1, 2, 3, 4);
+
+const foo = bar(
+  condition
+    ? getX()
+    : getY(),
+  1,
+  2,
+  3,
+  4
+);
 
 const foo = bar(
   1,
   2,
   condition
-    ? doX()
-    : doY(),
+    ? getX()
+    : getY(),
   3,
   4
 );
 
-const foo = 
+const foo = bar(
+  1,
+  2,
+  3,
+  4,
   condition
-    ? doX()
-    : doY();
+    ? getX()
+    : getY()
+);
 
 const foo = 
   condition
-    ? doX()
-    : doY();
+    ? getX()
+    : getY();
+
+const foo = 
+  condition
+    ? getX()
+    : getY();
 
 const foo = 
   // Some comment
   condition
-    ? doX()
-    : doY();
+    ? getX()
+    : getY();
 
 const foo = 
   condition
     // Some comment
-    ? doX()
+    ? getX()
     // Some
     // comment
-    : doY();
+    : getY();
 
 const foo = 
   // a
   condition // b
     // c
-    ? doX() // d // e // f
+    ? getX() // d // e // f
     // g
-    : doY() // h // i // j
+    : getY() // h // i // j
     // k;
 
 const foo = /* a */ 
   condition /* b */
     /* c */
-    ? doX() /* d */ /* e */
+    ? getX() /* d */ /* e */
     /* f */
-    : doY() /* g */ /* h */;
+    : getY() /* g */ /* h */;
 
 const foo = /* a */ 
   condition /* b */
-    ? doX() /* c */ /* d */
-    : doY() /* e */ /* f */;
+    ? getX() /* c */ /* d */
+    : getY() /* e */ /* f */;
 

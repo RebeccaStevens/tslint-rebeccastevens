@@ -6,7 +6,10 @@ import * as Lint from 'tslint';
 import * as ts from 'typescript';
 
 import deepEqual from 'deep-equal';
-import { isConditionalExpression } from 'tsutils/typeguard';
+import {
+  isCallExpression,
+  isConditionalExpression
+} from 'tsutils/typeguard';
 import { getLineRanges } from 'tsutils/util';
 
 import {
@@ -223,34 +226,38 @@ function compareIdealToActual(
     );
   };
 
-  return [markAsInvalidNode(node, failureMessage, [
-    new Lint.Replacement(
-      node.getStart(),
-      node.getWidth(),
-      (
-        `${'\n'.repeat(conditionLinesAbove)
-        }${formatCode(node.condition.getText(), conditionSpacesBefore)
-        }${formatComment(idealInfo.condition.trailingComment)
+  return [
+    markAsInvalidNode(
+      node,
+      failureMessage, [
+      new Lint.Replacement(
+        node.getStart(),
+        node.getWidth(),
+        (
+          `${'\n'.repeat(conditionLinesAbove)
+          }${formatCode(node.condition.getText(), conditionSpacesBefore)
+          }${formatComment(idealInfo.condition.trailingComment)
 
-        }${'\n'
-        }${formatComment(idealInfo.questionToken.leadingComment, questionTokenSpacesBefore, true)
-        }${formatCode(node.questionToken.getText(), questionTokenSpacesBefore)
+          }${'\n'
+          }${formatComment(idealInfo.questionToken.leadingComment, questionTokenSpacesBefore, true)
+          }${formatCode(node.questionToken.getText(), questionTokenSpacesBefore)
 
-        }${formatCode(node.whenTrue.getText(), 1)
-        }${formatComment(idealInfo.questionToken.trailingComment)
-        }${formatComment(idealInfo.whenTrue.leadingComment)
-        }${formatComment(idealInfo.whenTrue.trailingComment)
+          }${formatCode(node.whenTrue.getText(), 1)
+          }${formatComment(idealInfo.questionToken.trailingComment)
+          }${formatComment(idealInfo.whenTrue.leadingComment)
+          }${formatComment(idealInfo.whenTrue.trailingComment)
 
-        }${'\n'
-        }${formatComment(idealInfo.colonToken.leadingComment, colonTokenSpacesBefore, true)
-        }${formatCode(node.colonToken.getText(), colonTokenSpacesBefore)
+          }${'\n'
+          }${formatComment(idealInfo.colonToken.leadingComment, colonTokenSpacesBefore, true)
+          }${formatCode(node.colonToken.getText(), colonTokenSpacesBefore)
 
-        }${formatCode(node.whenFalse.getText(), 1)
-        }${formatComment(idealInfo.colonToken.trailingComment)
-        }${formatComment(idealInfo.whenFalse.leadingComment)}`
+          }${formatCode(node.whenFalse.getText(), 1)
+          }${formatComment(idealInfo.colonToken.trailingComment)
+          }${formatComment(idealInfo.whenFalse.leadingComment)}`
+        )
       )
-    )
-  ])];
+    ])
+  ];
 }
 
 /**
@@ -261,10 +268,12 @@ function getIdealConditionPosition(
   node: ts.Expression,
   info: StartAndEndInfo
 ): IdealPosition {
-  const conditionOnSameLine = isOnSameLineAsPreviousNode(
-    conditionalExpression,
-    info.start.line
-  );
+  const siblingBefore = getSiblingBefore(conditionalExpression);
+
+  const conditionOnSameLineAsPreviousSibling =
+    siblingBefore === undefined
+      ? false
+      : isOnLine(siblingBefore, info.start.line);
 
   const {
     hasTrailingNewLine: leadingCommentHasTrailingNewLine
@@ -274,24 +283,35 @@ function getIdealConditionPosition(
     comment: trailingComment
   } = getTrailingCommentInfo(node);
 
+  const needsIndentation = !(
+    leadingCommentHasTrailingNewLine ||
+    (
+      // Ternaries in call expressions should not be indented more than the previous
+      // line unless it is the first argument.
+      !conditionOnSameLineAsPreviousSibling &&
+      isCallExpression(conditionalExpression.parent) &&
+      conditionalExpression.parent.arguments[0] !== conditionalExpression
+    )
+  );
+
   const indentAmount = getIndentationOfLine(
-    info.start.line - (conditionOnSameLine ? 0 : 1),
+    info.start.line - (conditionOnSameLineAsPreviousSibling ? 0 : 1),
     node.getSourceFile()
   ) + (
-    leadingCommentHasTrailingNewLine
-      ? 0
-      : INDENTATION.length
+    needsIndentation
+      ? INDENTATION.length
+      : 0
   );
 
   return {
     trailingComment,
     position: {
       start: {
-        line: info.start.line + (conditionOnSameLine ? 1 : 0),
+        line: info.start.line + (conditionOnSameLineAsPreviousSibling ? 1 : 0),
         character: indentAmount
       },
       end: {
-        line: info.end.line + (conditionOnSameLine ? 1 : 0),
+        line: info.end.line + (conditionOnSameLineAsPreviousSibling ? 1 : 0),
         character: indentAmount + info.end.character - info.start.character
       }
     }
@@ -390,23 +410,14 @@ function getLineAndCharacterInfo(
 }
 
 /**
- * Returns whether or not the given node is on the same line as the previous node.
+ * Returns whether or not the given node is on the given line.
  */
-function isOnSameLineAsPreviousNode(
+function isOnLine(
   node: ts.Node,
-  nodeLine: number
+  lineNumber: number
 ): boolean {
-  const siblingBefore = getSiblingBefore(node);
-  const siblingBeforeInfo =
-    siblingBefore === undefined
-      ? undefined
-      : getStartAndEndInfo(siblingBefore);
-
-  return (
-    siblingBeforeInfo === undefined
-      ? false
-      : siblingBeforeInfo.end.line === nodeLine
-  );
+  const nodeInfo = getStartAndEndInfo(node);
+  return nodeInfo.end.line === lineNumber;
 }
 
 /**

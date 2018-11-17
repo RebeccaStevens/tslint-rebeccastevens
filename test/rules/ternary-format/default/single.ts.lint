@@ -1,58 +1,81 @@
 const condition = true;
 
-const doX = () => {};
-const doY = () => {};
+const getX = () => {};
+const getY = () => {};
 const bar = (a, b, c, d, e) => {};
 
 const foo = 
   condition
-    ? doX()
-    : doY();
+    ? getX()
+    : getY();
 
 const foo = 
   (
     condition
   )
     ? (
-        doX()
+        getX()
       )
     : (
-        doY()
+        getY()
       );
+
+const foo = bar(condition ? getX() : getY(), 1, 2, 3, 4);
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~               [failure]
+
+const foo = bar(
+  condition
+    ? getX()
+    : getY(),
+  1,
+  2,
+  3,
+  4
+);
 
 const foo = bar(
   1,
   2,
   condition
-    ? doX()
-    : doY(),
+    ? getX()
+    : getY(),
   3,
   4
 );
 
+const foo = bar(
+  1,
+  2,
+  3,
+  4,
+  condition
+    ? getX()
+    : getY()
+);
+
 const foo = condition
             ~~~~~~~~~
-  ? doX()
-~~~~~~~~~
-  : doY();
-~~~~~~~~~  [failure]
+  ? getX()
+~~~~~~~~~~
+  : getY();
+~~~~~~~~~~  [failure]
 
-const foo = condition ? doX() : doY();
-            ~~~~~~~~~~~~~~~~~~~~~~~~~ [failure]
+const foo = condition ? getX() : getY();
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~ [failure]
 
 const foo = 
   // Some comment
   condition
-    ? doX()
-    : doY();
+    ? getX()
+    : getY();
 
 const foo = 
   condition
     // Some comment
-    ? doX()
+    ? getX()
     // Some
     // comment
-    : doY();
+    : getY();
 
 const foo = 
   // a
@@ -64,26 +87,26 @@ const foo =
 ~~~~~~~~~~
     // e
 ~~~~~~~~
-    doX() // f
-~~~~~~~~~~~~~~
+    getX() // f
+~~~~~~~~~~~~~~~
     // g
 ~~~~~~~~
     : // h
 ~~~~~~~~~~
     // i
 ~~~~~~~~
-    doY() // j
-~~~~~~~~~      [failure]
+    getY() // j
+~~~~~~~~~~      [failure]
     // k;
 
 const foo = /* a */ condition /* b */
                     ~~~~~~~~~~~~~~~~~
-/* c */ ? /* d */ doX() /* e */
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/* f */ : /* g */ doY() /* h */;
-~~~~~~~~~~~~~~~~~~~~~~~          [failure]
+/* c */ ? /* d */ getX() /* e */
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/* f */ : /* g */ getY() /* h */;
+~~~~~~~~~~~~~~~~~~~~~~~~          [failure]
 
-const foo = /* a */ condition /* b */ ? /* c */ doX() /* d */ : /* e */ doY() /* f */;
-                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~          [failure]
+const foo = /* a */ condition /* b */ ? /* c */ getX() /* d */ : /* e */ getY() /* f */;
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~          [failure]
 
 [failure]: Incorrectly formatted ternary operator.

@@ -2,42 +2,42 @@ const condition = true;
 const conditionA = true;
 const conditionB = true;
 
-const doX = () => {};
-const doY = () => {};
-const doZ = () => {};
+const getX = () => {};
+const getY = () => {};
+const getZ = () => {};
 
-const foo =
+const foo = 
     conditionA
-  ? doX()
+  ? getX()
   : conditionB
-  ? doY()
-  : doZ();
+  ? getY()
+  : getZ();
 
-const foo = conditionA ? doX() : conditionB ? doY() : doZ();
-            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [failure]
+const foo = conditionA ? getX() : conditionB ? getY() : getZ();
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [failure]
 
-const foo =
+const foo = 
   conditionA
   ~~~~~~~~~~
-    ? doX()
-~~~~~~~~~~~
+    ? getX()
+~~~~~~~~~~~~
     : conditionB
 ~~~~~~~~~~~~~~~~
-        ? doY()
-~~~~~~~~~~~~~~~
-        : doZ();
-~~~~~~~~~~~~~~~ [failure]
+        ? getY()
+~~~~~~~~~~~~~~~~
+        : getZ();
+~~~~~~~~~~~~~~~~ [failure]
 
-const foo  =
+const foo = 
   conditionA
   ~~~~~~~~~~
-  ? doX()
-~~~~~~~~~
+  ? getX()
+~~~~~~~~~~
   : conditionB
 ~~~~~~~~~~~~~~
-  ? doY()
-~~~~~~~~~
-  : doZ();
-~~~~~~~~~ [failure]
+  ? getY()
+~~~~~~~~~~
+  : getZ();
+~~~~~~~~~~ [failure]
 
 [failure]: Incorrectly formatted ternary operator.
