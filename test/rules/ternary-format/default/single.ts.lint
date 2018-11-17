@@ -2,6 +2,7 @@ const condition = true;
 
 const doX = () => {};
 const doY = () => {};
+const bar = (a, b, c, d, e) => {};
 
 const foo = 
   condition
@@ -18,6 +19,16 @@ const foo =
     : (
         doY()
       );
+
+const foo = bar(
+  1,
+  2,
+  condition
+    ? doX()
+    : doY(),
+  3,
+  4
+);
 
 const foo = condition
             ~~~~~~~~~
@@ -39,7 +50,8 @@ const foo =
   condition
     // Some comment
     ? doX()
-    // Some comment
+    // Some
+    // comment
     : doY();
 
 const foo = 
@@ -64,12 +76,14 @@ const foo =
 ~~~~~~~~~      [failure]
     // k;
 
-const foo = 
-  /* a */ condition /* b */
-          ~~~~~~~~~~~~~~~~~
-  /* c */ ? /* d */ doX() /* e */
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  /* f */ : /* g */ doY() /* h */;
-~~~~~~~~~~~~~~~~~~~~~~~~~          [failure]
+const foo = /* a */ condition /* b */
+                    ~~~~~~~~~~~~~~~~~
+/* c */ ? /* d */ doX() /* e */
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/* f */ : /* g */ doY() /* h */;
+~~~~~~~~~~~~~~~~~~~~~~~          [failure]
+
+const foo = /* a */ condition /* b */ ? /* c */ doX() /* d */ : /* e */ doY() /* f */;
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~          [failure]
 
 [failure]: Incorrectly formatted ternary operator.
