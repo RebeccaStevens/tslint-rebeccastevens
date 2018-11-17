@@ -11,8 +11,9 @@ import { getLineRanges } from 'tsutils/util';
 
 import {
   createNodeRule,
-  InvalidNode,
-  markAsInvalidNode
+  InvalidNodeResult,
+  markAsInvalidNode,
+  RuleFunctionResult
 } from './common/nodeRuleHelpers';
 import * as Options from './common/options';
 import { getSiblingBefore } from './common/util';
@@ -34,7 +35,7 @@ interface StartAndEndInfo {
 }
 
 const failureMessage = 'Incorrectly formatted ternary operator.';
-const indentation = '  ';
+const INDENTATION = '  ';
 
 /**
  * The `ternary-format`.
@@ -47,19 +48,15 @@ export const Rule = createNodeRule<RuleOptions>(ruleEntryPoint);
 function ruleEntryPoint(
   node: ts.Node,
   ctx: Lint.WalkContext<RuleOptions>
-): {
-  readonly invalidNodes: Array<InvalidNode>;
-  readonly skipChildren: boolean;
-} {
+): RuleFunctionResult {
   if (isConditionalExpression(node)) {
+    const nodeInfo = getLineAndCharacterInfo(node, ctx.sourceFile);
     const trueFlowing = isConditionalExpression(node.whenTrue);
     const falseFlowing = isConditionalExpression(node.whenFalse);
 
-    const lineAndCharacterInfo = getLineAndCharacterInfo(node, ctx.sourceFile);
-
     if (!trueFlowing && !falseFlowing) {
       return {
-        invalidNodes: checkNonNested(node, ctx, lineAndCharacterInfo),
+        invalidNodes: checkNonNested(node, ctx, nodeInfo),
         skipChildren: true
       };
     }
@@ -83,7 +80,7 @@ function checkNonNested(
   node: ts.ConditionalExpression,
   ctx: Lint.WalkContext<RuleOptions>,
   nodeInfo: ConditionalExpressionInfo
-): Array<InvalidNode> {
+): Array<InvalidNodeResult> {
   if (Boolean(ctx.options.allowSingleLine)) {
     const onSingleLine = nodeInfo.condition.start.line === nodeInfo.whenFalse.end.line;
     if (onSingleLine) {
@@ -91,28 +88,28 @@ function checkNonNested(
     }
   }
 
-  const condition = getIdealCondition(
+  const condition = getIdealConditionPosition(
     node,
     ctx.sourceFile,
     nodeInfo.condition
   );
 
-  const questionToken = getIdealQuestionToken(
+  const questionToken = getIdealTokenPosition(
     condition.end.line,
     condition.start.character
   );
 
-  const whenTrue = getIdealWhenTrue(
+  const whenTrue = getIdealBranchPosition(
     nodeInfo.whenTrue,
     questionToken.end
   );
 
-  const colonToken = getIdealColonToken(
+  const colonToken = getIdealTokenPosition(
     whenTrue.end.line,
-    questionToken
+    condition.start.character
   );
 
-  const whenFalse = getIdealWhenFalse(
+  const whenFalse = getIdealBranchPosition(
     nodeInfo.whenFalse,
     colonToken.end
   );
@@ -132,27 +129,6 @@ function checkNonNested(
 }
 
 /**
- * Get the indentation of the given line.
- */
-function getIndentationOfLine(
-  sourceFile: ts.SourceFile,
-  indentationLine: number
-): number {
-  const lineRanges = getLineRanges(sourceFile);
-  if (indentationLine >= lineRanges.length || indentationLine < 0) {
-    return 0;
-  }
-  const lineRange = lineRanges[indentationLine];
-  const line = sourceFile.text.substring(lineRange.pos, lineRange.pos + lineRange.contentLength);
-  const indentEnd = line.search(/\S/);
-  return (
-    indentEnd === -1
-      ? 0
-      : indentEnd
-  );
-}
-
-/**
  * Compare the ideal format to the actual format.
  */
 function compareIdealToActual(
@@ -160,7 +136,7 @@ function compareIdealToActual(
   sourceFile: ts.SourceFile,
   ideal: ConditionalExpressionInfo,
   actual: ConditionalExpressionInfo
-): Array<InvalidNode> {
+): Array<InvalidNodeResult> {
   if (deepEqual(ideal, actual, { strict: true })) {
     return [];
   }
@@ -206,6 +182,89 @@ function compareIdealToActual(
 }
 
 /**
+ * Get the ideal position for the condition.
+ */
+function getIdealConditionPosition(
+  node: ts.Node,
+  sourceFile: ts.SourceFile,
+  info: StartAndEndInfo
+): StartAndEndInfo {
+  const conditionOnSameLine = isOnSameLineAsPreviousNode(
+    node,
+    info.start.line,
+    sourceFile
+  );
+
+  const indentAmount = getIndentationOfLine(
+    sourceFile,
+    info.start.line - (conditionOnSameLine ? 0 : 1)
+  ) + (
+    isCommentAbove(node, sourceFile)
+      ? 0
+      : INDENTATION.length
+  );
+
+  return {
+    start: {
+      line: info.start.line + (conditionOnSameLine ? 1 : 0),
+      character: indentAmount
+    },
+    end: {
+      line: info.end.line + (conditionOnSameLine ? 1 : 0),
+      character: indentAmount + info.end.character - info.start.character
+    }
+  };
+}
+
+/**
+ * Get the ideal position for the question/colon token.
+ */
+function getIdealTokenPosition(
+  previousLine: number,
+  conditionIndentation: number
+): StartAndEndInfo {
+  return {
+    start: {
+      line: previousLine + 1,
+      character: conditionIndentation + INDENTATION.length
+    },
+    end: {
+      line: previousLine + 1,
+      character: conditionIndentation + INDENTATION.length + 1
+    }
+  };
+}
+
+/**
+ * Get the ideal position for a branch.
+ */
+function getIdealBranchPosition(
+  info: StartAndEndInfo,
+  tokenPosition: ts.LineAndCharacter
+): StartAndEndInfo {
+  const lineCount = (info.end.line - info.start.line) + 1;
+
+  return {
+    start: {
+      line: tokenPosition.line,
+      character: tokenPosition.character + 1
+    },
+    end: {
+      line: tokenPosition.line + lineCount - 1,
+      character:
+        lineCount === 1
+          ? (
+              tokenPosition.character +
+              info.end.character -
+              info.start.character +
+              1
+            )
+          : info.end.character
+    }
+  };
+}
+
+/**
  * Get the line and character information for the given node.
  */
 function getLineAndCharacterInfo(
@@ -243,7 +302,7 @@ function isOnSameLineAsPreviousNode(
 }
 
 /**
- * Get the start and end info for the given node.
+ * Get the position for the given node.
  */
 function getStartAndEndInfo(
   node: ts.Node,
@@ -271,132 +330,22 @@ function isCommentAbove(
 }
 
 /**
- * Get the ideal start and end info for the condition.
+ * Get the indentation of the given line.
  */
-function getIdealCondition(
-  node: ts.Node,
+function getIndentationOfLine(
   sourceFile: ts.SourceFile,
-  info: StartAndEndInfo
-): StartAndEndInfo {
-  const conditionOnSameLine = isOnSameLineAsPreviousNode(
-    node,
-    info.start.line,
-    sourceFile
-  );
-
-  const indentAmount = getIndentationOfLine(
-    sourceFile,
-    info.start.line - (conditionOnSameLine ? 0 : 1)
-  ) + (
-    isCommentAbove(node, sourceFile)
+  indentationLine: number
+): number {
+  const lineRanges = getLineRanges(sourceFile);
+  if (indentationLine >= lineRanges.length || indentationLine < 0) {
+    return 0;
+  }
+  const lineRange = lineRanges[indentationLine];
+  const line = sourceFile.text.substring(lineRange.pos, lineRange.pos + lineRange.contentLength);
+  const indentEnd = line.search(/\S/);
+  return (
+    indentEnd === -1
       ? 0
-      : indentation.length
+      : indentEnd
   );
-
-  return {
-    start: {
-      line: info.start.line + (conditionOnSameLine ? 1 : 0),
-      character: indentAmount
-    },
-    end: {
-      line: info.end.line + (conditionOnSameLine ? 1 : 0),
-      character: indentAmount + info.end.character - info.start.character
-    }
-  };
-}
-
-/**
- * Get the ideal start and end info for the question token.
- */
-function getIdealQuestionToken(
-  conditionLine: number,
-  conditionIndentation: number
-): StartAndEndInfo {
-  return {
-    start: {
-      line: conditionLine + 1,
-      character: conditionIndentation + indentation.length
-    },
-    end: {
-      line: conditionLine + 1,
-      character: conditionIndentation + indentation.length + 1
-    }
-  };
-}
-
-/**
- * Get the ideal start and end info for the when true branch.
- */
-function getIdealWhenTrue(
-  info: StartAndEndInfo,
-  questionTokenLineAndCharacter: ts.LineAndCharacter
-): StartAndEndInfo {
-  const lineCount = (info.end.line - info.start.line) + 1;
-
-  return {
-    start: {
-      line: questionTokenLineAndCharacter.line,
-      character: questionTokenLineAndCharacter.character + 1
-    },
-    end: {
-      line: questionTokenLineAndCharacter.line + lineCount - 1,
-      character:
-        lineCount === 1
-          ? (
-              questionTokenLineAndCharacter.character +
-              info.end.character -
-              info.start.character +
-              1
-            )
-          : info.end.character
-    }
-  };
-}
-
-/**
- * Get the ideal start and end info for the colon token.
- */
-function getIdealColonToken(
-  whenTrueLine: number,
-  questionTokenInfo: StartAndEndInfo
-): StartAndEndInfo {
-  return {
-    start: {
-      line: whenTrueLine + 1,
-      character: questionTokenInfo.start.character
-    },
-    end: {
-      line: whenTrueLine + 1,
-      character: questionTokenInfo.end.character
-    }
-  };
-}
-
-/**
- * Get the ideal start and end info for the when false branch.
- */
-function getIdealWhenFalse(
-  info: StartAndEndInfo,
-  colonTokenLineAndCharacter: ts.LineAndCharacter
-): StartAndEndInfo {
-  const lineCount = (info.end.line - info.start.line) + 1;
-
-  return {
-    start: {
-      line: colonTokenLineAndCharacter.line,
-      character: colonTokenLineAndCharacter.character + 1
-    },
-    end: {
-      line: colonTokenLineAndCharacter.line + lineCount - 1,
-      character:
-        lineCount === 1
-          ? (
-              colonTokenLineAndCharacter.character +
-              info.end.character -
-              info.start.character +
-              1
-            )
-          : info.end.character
-    }
-  };
 }
