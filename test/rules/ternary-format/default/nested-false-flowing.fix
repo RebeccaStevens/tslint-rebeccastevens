@@ -20,7 +20,7 @@ const foo =
   : getZ();
 
 const foo = 
-  conditionA
+    conditionA
   ? getX()
   : conditionB
   ? getY()

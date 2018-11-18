@@ -1,0 +1,11 @@
+const foo = 
+    conditionA
+  ?   conditionB
+    ? getX()
+    : getY()
+  : getZ();
+
+const foo = conditionA ? conditionB ? getX() : getY() : getZ();
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [failure]
+
+[failure]: Incorrectly formatted ternary operator.

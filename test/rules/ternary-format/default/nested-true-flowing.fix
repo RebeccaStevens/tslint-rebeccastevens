@@ -1,0 +1,14 @@
+const foo = 
+    conditionA
+  ?   conditionB
+    ? getX()
+    : getY()
+  : getZ();
+
+const foo = 
+    conditionA
+  ?   conditionB
+    ? getX()
+    : getY()
+  : getZ();
+

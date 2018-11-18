@@ -2,6 +2,7 @@
  * This rule ensure ternary operators are formated a certain way.
  */
 
+import * as assert from 'assert';
 import * as Lint from 'tslint';
 import * as ts from 'typescript';
 
@@ -319,6 +320,28 @@ function compareIdealToActual(
     return [];
   }
 
+  const isParent =
+    idealInfo.whenTrue.nested !== undefined ||
+    idealInfo.whenFalse.nested !== undefined;
+
+  const trueNestedInvalidNodes =
+    idealInfo.whenTrue.nested === undefined
+      ? []
+      : compareIdealToActual(
+          node.whenTrue as ts.ConditionalExpression,
+          idealInfo.whenTrue.nested,
+          getConditionalExpressionInfo(node.whenTrue as ts.ConditionalExpression)
+        );
+
+  const falseNestedInvalidNodes =
+    idealInfo.whenFalse.nested === undefined
+      ? []
+      : compareIdealToActual(
+          node.whenFalse as ts.ConditionalExpression,
+          idealInfo.whenFalse.nested,
+          getConditionalExpressionInfo(node.whenFalse as ts.ConditionalExpression)
+        );
+
   if (
     deepEqual(
       {
@@ -332,24 +355,6 @@ function compareIdealToActual(
       { strict: true }
     )
   ) {
-    const trueNestedInvalidNodes =
-      idealInfo.whenTrue.nested === undefined
-        ? []
-        : compareIdealToActual(
-            node.whenTrue as ts.ConditionalExpression,
-            idealInfo.whenTrue.nested,
-            getConditionalExpressionInfo(node.whenTrue as ts.ConditionalExpression)
-          );
-
-    const falseNestedInvalidNodes =
-      idealInfo.whenFalse.nested === undefined
-        ? []
-        : compareIdealToActual(
-            node.whenFalse as ts.ConditionalExpression,
-            idealInfo.whenFalse.nested,
-            getConditionalExpressionInfo(node.whenFalse as ts.ConditionalExpression)
-          );
-
     return [
       ...trueNestedInvalidNodes,
       ...falseNestedInvalidNodes
@@ -359,7 +364,11 @@ function compareIdealToActual(
   const conditionLinesAbove =
     idealInfo.condition.position.start.line - actualPosition.condition.end.line;
   const conditionSpacesBefore =
-    conditionLinesAbove > 0 ? idealInfo.condition.position.start.character : 0;
+      conditionLinesAbove > 0
+    ? idealInfo.condition.position.start.character
+    : isParent
+    ? INDENTATION.length
+    : 0;
 
   const questionTokenLinesAbove =
     idealInfo.questionToken.position.start.line - idealInfo.condition.position.end.line;
@@ -373,11 +382,19 @@ function compareIdealToActual(
     idealInfo.colonToken.position.start.character - (colonTokenLinesAbove === 0 ? INDENTATION.length : 0);
 
   const formatCode = (
-    code: string,
+    code: string | ReadonlyArray<InvalidNodeResult>,
     indent: number
   ): string => {
+    if (typeof code === 'string' || code.length === 0 || code[0].replacements.length === 0) {
+      return `${' '.repeat(indent)}${code}`;
+    }
+
+    assert.strictEqual(code.length, 1);
+    assert.strictEqual(code[0].replacements.length, 1);
+
     return (
-      ' '.repeat(indent) + code
+      ' '.repeat(indent) +
+      code[0].replacements[0].text
     );
   };
 
@@ -410,7 +427,7 @@ function compareIdealToActual(
         }${formatComment(idealInfo.questionToken.leadingComment, questionTokenSpacesBefore, true)
         }${formatCode(node.questionToken.getText(), questionTokenSpacesBefore)
 
-        }${formatCode(node.whenTrue.getText(), 1)
+        }${formatCode(trueNestedInvalidNodes.length === 0 ? node.whenTrue.getText() : trueNestedInvalidNodes, 1)
         }${formatComment(idealInfo.questionToken.trailingComment)
         }${formatComment(idealInfo.whenTrue.leadingComment)
         }${formatComment(idealInfo.whenTrue.trailingComment)
@@ -419,7 +436,7 @@ function compareIdealToActual(
         }${formatComment(idealInfo.colonToken.leadingComment, colonTokenSpacesBefore, true)
         }${formatCode(node.colonToken.getText(), colonTokenSpacesBefore)
 
-        }${formatCode(node.whenFalse.getText(), 1)
+        }${formatCode(falseNestedInvalidNodes.length === 0 ? node.whenFalse.getText() : falseNestedInvalidNodes, 1)
         }${formatComment(idealInfo.colonToken.trailingComment)
         }${formatComment(idealInfo.whenFalse.leadingComment)}`
       )
