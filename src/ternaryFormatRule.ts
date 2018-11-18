@@ -33,15 +33,13 @@ interface ConditionalExpressionInfo {
   readonly whenFalse: StartAndEndInfo;
 }
 
-type IdealConditionalExpression =
-  | {
-      readonly condition: IdealPosition;
-      readonly questionToken: IdealPosition;
-      readonly whenTrue: IdealPosition;
-      readonly colonToken: IdealPosition;
-      readonly whenFalse: IdealPosition;
-    }
-  | false;
+interface IdealConditionalExpression {
+  readonly condition: IdealPosition;
+  readonly questionToken: IdealPosition;
+  readonly whenTrue: IdealPosition;
+  readonly colonToken: IdealPosition;
+  readonly whenFalse: IdealPosition;
+}
 
 interface StartAndEndInfo {
   readonly start: ts.LineAndCharacter;
@@ -139,11 +137,11 @@ function getIdealConditionalExpression(
 function getIdealMixedNested(
   _node: ts.ConditionalExpression,
   _ctx: Lint.WalkContext<RuleOptions>,
-  _nodeInfo: ConditionalExpressionInfo
+  nodeInfo: ConditionalExpressionInfo
 ): IdealConditionalExpression {
   // TODO: Implement.
   // BODY: Implement mixed nested case.
-  return false;
+  return conditionalExpressionInfoToIdealConditionalExpression(nodeInfo);
 }
 
 /**
@@ -152,11 +150,11 @@ function getIdealMixedNested(
 function getIdealTrueFlowingNested(
   _node: ts.ConditionalExpression,
   _ctx: Lint.WalkContext<RuleOptions>,
-  _nodeInfo: ConditionalExpressionInfo
+  nodeInfo: ConditionalExpressionInfo
 ): IdealConditionalExpression {
   // TODO: Implement.
   // BODY: Implement true flowing nested case.
-  return false;
+  return conditionalExpressionInfoToIdealConditionalExpression(nodeInfo);
 }
 
 /**
@@ -265,7 +263,7 @@ function getIdealNonNested(
   if (Boolean(ctx.options.allowSingleLine)) {
     const onSingleLine = nodeInfo.condition.start.line === nodeInfo.whenFalse.end.line;
     if (onSingleLine) {
-      return false;
+      return conditionalExpressionInfoToIdealConditionalExpression(nodeInfo);
     }
   }
 
@@ -316,10 +314,6 @@ function compareIdealToActual(
   idealInfo: IdealConditionalExpression,
   actualPosition: ConditionalExpressionInfo
 ): Array<InvalidNodeResult> {
-  if (idealInfo === false) {
-    return [];
-  }
-
   const isParent =
     idealInfo.whenTrue.nested !== undefined ||
     idealInfo.whenFalse.nested !== undefined;
@@ -861,5 +855,30 @@ function getCommentInfo(
     pos: range[0].pos,
     end: range[range.length - 1].end,
     hasTrailingNewLine
+  };
+}
+
+/**
+ * Create an IdealConditionalExpression from a ConditionalExpressionInfo.
+ */
+function conditionalExpressionInfoToIdealConditionalExpression(
+  conditionalExpressionInfo: ConditionalExpressionInfo
+): IdealConditionalExpression {
+  return {
+    condition: {
+      position: conditionalExpressionInfo.condition
+    },
+    questionToken: {
+      position: conditionalExpressionInfo.questionToken
+    },
+    whenTrue: {
+      position: conditionalExpressionInfo.whenTrue
+    },
+    colonToken: {
+      position: conditionalExpressionInfo.colonToken
+    },
+    whenFalse: {
+      position: conditionalExpressionInfo.whenFalse
+    }
   };
 }
