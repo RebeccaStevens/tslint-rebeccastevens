@@ -81,28 +81,81 @@ function ruleEntryPoint(
   node: ts.Node,
   ctx: Lint.WalkContext<RuleOptions>
 ): RuleFunctionResult {
-  if (isConditionalExpression(node)) {
-    const nodeInfo = getLineAndCharacterInfo(node);
-    const trueFlowing = isConditionalExpression(node.whenTrue);
-    const falseFlowing = isConditionalExpression(node.whenFalse);
-
-    if (!trueFlowing && !falseFlowing) {
-      return {
-        invalidNodes: checkNonNested(node, ctx, nodeInfo),
-        skipChildren: true
-      };
-    }
-
+  if (!isConditionalExpression(node)) {
     return {
       invalidNodes: [],
+      skipChildren: false
+    };
+  }
+
+  const nodeInfo = getLineAndCharacterInfo(node);
+  const trueFlowing = isConditionalExpression(node.whenTrue);
+  const falseFlowing = isConditionalExpression(node.whenFalse);
+
+  if (trueFlowing && falseFlowing) {
+    return {
+      invalidNodes: checkMixedNested(node, ctx, nodeInfo),
+      skipChildren: true
+    };
+  }
+
+  if (trueFlowing && !falseFlowing) {
+    return {
+      invalidNodes: checkTrueFlowingNested(node, ctx, nodeInfo),
+      skipChildren: true
+    };
+  }
+
+  if (!trueFlowing && falseFlowing) {
+    return {
+      invalidNodes: checkFalseFlowingNested(node, ctx, nodeInfo),
       skipChildren: true
     };
   }
 
   return {
-    invalidNodes: [],
-    skipChildren: false
+    invalidNodes: checkNonNested(node, ctx, nodeInfo),
+    skipChildren: true
   };
+}
+
+/**
+ * Check a non nested ternary operator.
+ */
+function checkMixedNested(
+  _node: ts.ConditionalExpression,
+  _ctx: Lint.WalkContext<RuleOptions>,
+  _nodeInfo: ConditionalExpressionInfo
+): Array<InvalidNodeResult> {
+  // TODO: Implement.
+  // BODY: Implement mixed nested case.
+  return [];
+}
+
+/**
+ * Check a non nested ternary operator.
+ */
+function checkTrueFlowingNested(
+  _node: ts.ConditionalExpression,
+  _ctx: Lint.WalkContext<RuleOptions>,
+  _nodeInfo: ConditionalExpressionInfo
+): Array<InvalidNodeResult> {
+  // TODO: Implement.
+  // BODY: Implement true flowing nested case.
+  return [];
+}
+
+/**
+ * Check a non nested ternary operator.
+ */
+function checkFalseFlowingNested(
+  _node: ts.ConditionalExpression,
+  _ctx: Lint.WalkContext<RuleOptions>,
+  _nodeInfo: ConditionalExpressionInfo
+): Array<InvalidNodeResult> {
+  // TODO: Implement.
+  // BODY: Implement false flowing nested case.
+  return [];
 }
 
 /**
@@ -120,31 +173,31 @@ function checkNonNested(
     }
   }
 
-  const condition = getIdealConditionPosition(
+  const condition = getIdealNonNestedConditionPosition(
     node,
     node.condition,
     nodeInfo.condition
   );
 
-  const questionToken = getIdealTokenPosition(
+  const questionToken = getIdealNonNestedTokenPosition(
     node.questionToken,
     condition.position.end.line,
     condition.position.start.character
   );
 
-  const whenTrue = getIdealBranchPosition(
+  const whenTrue = getIdealNonNestedBranchPosition(
     node.whenTrue,
     nodeInfo.whenTrue,
     questionToken.position.end
   );
 
-  const colonToken = getIdealTokenPosition(
+  const colonToken = getIdealNonNestedTokenPosition(
     node.colonToken,
     whenTrue.position.end.line,
     condition.position.start.character
   );
 
-  const whenFalse = getIdealBranchPosition(
+  const whenFalse = getIdealNonNestedBranchPosition(
     node.whenFalse,
     nodeInfo.whenFalse,
     colonToken.position.end
@@ -261,9 +314,9 @@ function compareIdealToActual(
 }
 
 /**
- * Get the ideal position for the condition.
+ * Get the ideal position for the condition when non-nested.
  */
-function getIdealConditionPosition(
+function getIdealNonNestedConditionPosition(
   conditionalExpression: ts.ConditionalExpression,
   node: ts.Expression,
   info: StartAndEndInfo
@@ -319,9 +372,9 @@ function getIdealConditionPosition(
 }
 
 /**
- * Get the ideal position for the question/colon token.
+ * Get the ideal position for the question/colon token when non-nested.
  */
-function getIdealTokenPosition(
+function getIdealNonNestedTokenPosition(
   node: ts.Token<ts.SyntaxKind.QuestionToken> | ts.Token<ts.SyntaxKind.ColonToken>,
   previousLine: number,
   conditionIndentation: number
@@ -352,9 +405,9 @@ function getIdealTokenPosition(
 }
 
 /**
- * Get the ideal position for a branch.
+ * Get the ideal position for a branch when non-nested.
  */
-function getIdealBranchPosition(
+function getIdealNonNestedBranchPosition(
   node: ts.Expression,
   info: StartAndEndInfo,
   tokenPosition: ts.LineAndCharacter
