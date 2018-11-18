@@ -1,0 +1,35 @@
+const foo = 
+  // Some comment
+  condition
+    ? getX()
+    : getY();
+
+const foo = 
+  condition
+    // Some comment
+    ? getX()
+    // Some
+    // comment
+    : getY();
+
+const foo = 
+  // a
+  condition // b
+    // c
+    ? getX() // d // e // f
+    // g
+    : getY() // h // i // j
+    // k;
+
+const foo = /* a */ 
+  condition /* b */
+    /* c */
+    ? getX() /* d */ /* e */
+    /* f */
+    : getY() /* g */ /* h */;
+
+const foo = /* a */ 
+  condition /* b */
+    ? getX() /* c */ /* d */
+    : getY() /* e */ /* f */;
+

@@ -1,0 +1,34 @@
+const foo = bar(condition ? getX() : getY(), 1, 2, 3, 4);
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~               [failure]
+
+const foo = bar(
+  condition
+    ? getX()
+    : getY(),
+  1,
+  2,
+  3,
+  4
+);
+
+const foo = bar(
+  1,
+  2,
+  condition
+    ? getX()
+    : getY(),
+  3,
+  4
+);
+
+const foo = bar(
+  1,
+  2,
+  3,
+  4,
+  condition
+    ? getX()
+    : getY()
+);
+
+[failure]: Incorrectly formatted ternary operator.

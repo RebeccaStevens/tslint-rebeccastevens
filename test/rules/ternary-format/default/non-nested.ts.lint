@@ -1,0 +1,30 @@
+const foo = 
+  condition
+    ? getX()
+    : getY();
+
+const foo = 
+  (
+    condition
+  )
+    ? (
+        getX()
+      )
+    : (
+        getY()
+      );
+
+const foo = condition
+            ~~~~~~~~~
+  ? getX()
+~~~~~~~~~~
+  : getY();
+~~~~~~~~~~  [failure]
+
+const foo = condition ? getX() : getY();
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~  [failure]
+
+const foo = (condition) ? (getX()) : (getY());
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [failure]
+
+[failure]: Incorrectly formatted ternary operator.

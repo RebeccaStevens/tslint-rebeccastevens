@@ -1,11 +1,3 @@
-const condition = true;
-const conditionA = true;
-const conditionB = true;
-
-const getX = () => {};
-const getY = () => {};
-const getZ = () => {};
-
 const foo = 
     conditionA
   ? getX()
