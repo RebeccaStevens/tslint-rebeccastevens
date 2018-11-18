@@ -22,7 +22,13 @@
     "target": "es2017",
     "sourceMap": false,
     "removeComments": false,
-    "isolatedModules": true
+    "isolatedModules": true,
+
+    "plugins": [
+      {
+        "name": "typescript-tslint-plugin"
+      }
+    ]
   },
   "include": ["src/**/*.ts"]
 }
