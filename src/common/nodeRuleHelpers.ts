@@ -214,7 +214,6 @@ export function markAsInvalidNode(
   return {
     node,
     failureMessage,
-    // tslint:disable-next-line: readonly-array
-    replacements: replacements as Array<Lint.Replacement>
+    replacements: [...replacements]
   };
 }
