@@ -11,7 +11,8 @@ describe('nodeRuleHelpers', () => {
   it('can create a rule', () => {
     const rule = createNodeRule<{}>(
       () => ({
-        invalidNodes: []
+        invalidNodes: [],
+        skipChildren: false
       })
     );
 
@@ -21,7 +22,8 @@ describe('nodeRuleHelpers', () => {
   it('can create a typed rule', () => {
     const rule = createNodeTypedRule<{}>(
       () => ({
-        invalidNodes: []
+        invalidNodes: [],
+        skipChildren: false
       })
     );
 

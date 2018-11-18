@@ -32,6 +32,7 @@ const writeTslint = fs.outputJson(
     // Add overrides here.
     rules: {
       ...recommendedRuleSet.rules,
+      'no-implicit-dependencies': [true, 'dev'],
       'no-reserved-keywords': false
     }
   },

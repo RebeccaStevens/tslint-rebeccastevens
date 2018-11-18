@@ -1,5 +1,7 @@
 import { RuleConfig } from './RuleConfig';
 
+import standardRuleSet from './standard';
+
 const defaultSeverity = 'error';
 const rulesDirectory = './rules';
 const tslintExtends: ReadonlyArray<string> = [
@@ -20,9 +22,7 @@ const mutablePrefixes: ReadonlyArray<string> = [
 /**
  * My Rules.
  */
-const myRules: RuleConfig = {
-  'no-return-readonly-array': [true, 'include-type-arguments', 'deep']
-};
+const myRules = standardRuleSet.rules;
 
 /**
  * Built In Rules.

@@ -11,8 +11,9 @@ import * as ts from 'typescript';
 
 import {
   createNodeTypedRule,
-  InvalidNode,
-  markAsInvalidNode
+  InvalidNodeResult,
+  markAsInvalidNode,
+  RuleFunctionResult
 } from './common/nodeRuleHelpers';
 import * as Options from './common/options';
 import {
@@ -33,11 +34,7 @@ const failureMessageDeep = 'Do not return a ReadonlyArray within the result; use
 /**
  * The `no-return-readonly-array-rule`.
  */
-export const Rule = createNodeTypedRule<RuleOptions>(
-  (node, ctx, checker) => ({
-    invalidNodes: ruleEntryPoint(node, ctx, checker)
-  })
-);
+export const Rule = createNodeTypedRule<RuleOptions>(ruleEntryPoint);
 
 /**
  * Does the given node vialate this rule?
@@ -48,34 +45,41 @@ function ruleEntryPoint(
   node: ts.Node,
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker
-): Array<InvalidNode> {
-  if (!isTypedFunctionLikeDeclaration(node)) {
-    return [];
-  }
+): RuleFunctionResult {
+  if (isTypedFunctionLikeDeclaration(node)) {
+    if (ts.isTypeReferenceNode(node.type)) {
+      const invalidNodes = inspectTypeReference(
+        node.type,
+        ctx,
+        checker,
+        failureMessageDefault,
+        true
+      );
 
-  if (ts.isTypeReferenceNode(node.type)) {
-    const result = inspectTypeReference(
-      node.type,
-      ctx,
-      checker,
-      failureMessageDefault,
-      true
-    );
+      if (invalidNodes.length > 0) {
+        return {
+          invalidNodes,
+          skipChildren: false
+        };
+      }
+    }
 
-    if (result.length > 0) {
-      return result;
+    if (Boolean(ctx.options.deep)) {
+      const invalidNodes = checkOptionDeep(node, ctx, checker, true);
+
+      if (invalidNodes.length > 0) {
+        return {
+          invalidNodes,
+          skipChildren: false
+        };
+      }
     }
   }
 
-  if (Boolean(ctx.options.deep)) {
-    const result = checkOptionDeep(node, ctx, checker, true);
-
-    if (result.length > 0) {
-      return result;
-    }
-  }
-
-  return [];
+  return {
+    invalidNodes: [],
+    skipChildren: false
+  };
 }
 
 /**
@@ -86,7 +90,7 @@ function checkOptionDeep(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   safeToReplace: boolean
-): Array<InvalidNode> {
+): Array<InvalidNodeResult> {
   if (ts.isTypeLiteralNode(node.type)) {
     const result = inspectTypeLiteralNode(
       node.type,
@@ -125,7 +129,7 @@ function inspectPropertySignatureNode(
   checker: ts.TypeChecker,
   safeToReplace: boolean,
   nodeToMark?: ts.Node
-): Array<InvalidNode> {
+): Array<InvalidNodeResult> {
   if (node.type === undefined) {
     return [];
   }
@@ -163,7 +167,7 @@ function inspectTupleTypeNode(
   checker: ts.TypeChecker,
   safeToReplace: boolean,
   nodeToMark?: ts.Node
-): Array<InvalidNode> {
+): Array<InvalidNodeResult> {
   // tslint:disable-next-line:no-any
   const mutableIds: any = {};
 
@@ -173,7 +177,7 @@ function inspectTupleTypeNode(
      * BODY: Duplicates occur when `nodeToMark` gets marked as an invalid node by multiple elements in the tuple.
      *       Once this has been fixed, the filter function below can be removed.
      */
-    ([] as ReadonlyArray<InvalidNode>).concat(
+    ([] as ReadonlyArray<InvalidNodeResult>).concat(
       ...node.elementTypes.map((element) =>
         ts.isTypeReferenceNode(element)
           ? inspectTypeReference(
@@ -211,7 +215,7 @@ function inspectTypeReference(
   failureMessage: string,
   safeToReplace: boolean,
   nodeToMark?: ts.Node
-): Array<InvalidNode> {
+): Array<InvalidNodeResult> {
   if (!ts.isIdentifier(node.typeName)) {
     return [];
   }
@@ -260,7 +264,7 @@ function inspectTypeReferenceWithTypeChecking(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   nodeToMark?: ts.Node
-): Array<InvalidNode> {
+): Array<InvalidNodeResult> {
   if (!Boolean(ctx.options.deep)) {
     return [];
   }
@@ -306,7 +310,7 @@ function inspectTypeReferenceNodeTypeNode(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   nodeToMark?: ts.Node
-): Array<InvalidNode> {
+): Array<InvalidNodeResult> {
   const nodeTypeNode = checker.typeToTypeNode(nodeType);
 
   // This should never be undefined.
@@ -353,12 +357,12 @@ function inspectTypeReferenceTypeAlias(
   ctx: Lint.WalkContext<RuleOptions>,
   checker: ts.TypeChecker,
   nodeToMark?: ts.Node
-): Array<InvalidNode> {
+): Array<InvalidNodeResult> {
   if (nodeType.aliasSymbol === undefined) {
     return [];
   }
 
-  return ([] as ReadonlyArray<InvalidNode>).concat(
+  return ([] as ReadonlyArray<InvalidNodeResult>).concat(
     ...nodeType.aliasSymbol.declarations.map((declaration) =>
       (
         ts.isTypeAliasDeclaration(declaration) &&
@@ -387,9 +391,9 @@ function inspectTypeLiteralNode(
   checker: ts.TypeChecker,
   safeToReplace: boolean,
   nodeToMark?: ts.Node
-): Array<InvalidNode> {
+): Array<InvalidNodeResult> {
   return (
-    ([] as ReadonlyArray<InvalidNode>).concat(
+    ([] as ReadonlyArray<InvalidNodeResult>).concat(
       ...node.members.map((member) =>
         ts.isPropertySignature(member)
           ? inspectPropertySignatureNode(
@@ -415,13 +419,13 @@ function checkOptionIncludeTypeArguments(
   failureMessage: string,
   safeToReplace: boolean,
   nodeToMark?: ts.Node
-): Array<InvalidNode> {
+): Array<InvalidNodeResult> {
   if (node.typeArguments === undefined) {
     return [];
   }
 
   return (
-    ([] as ReadonlyArray<InvalidNode>).concat(
+    ([] as ReadonlyArray<InvalidNodeResult>).concat(
       ...node.typeArguments.map((argument) => {
         if (!ts.isTypeReferenceNode(argument)) {
           return [];

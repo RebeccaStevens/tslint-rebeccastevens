@@ -1,13 +1,8 @@
 /**
  * Helper funcation and types for creating tslint rules.
  */
-
 import * as Lint from 'tslint';
 import * as ts from 'typescript';
-
-type NodeRuleFunction<TOptions> =
-  | UntypedNodeRuleFunction<TOptions>
-  | TypedNodeRuleFunction<TOptions>;
 
 export type UntypedNodeRuleFunction<TOptions> = (
   node: ts.Node,
@@ -20,22 +15,18 @@ export type TypedNodeRuleFunction<TOptions> = (
   checker: ts.TypeChecker
 ) => RuleFunctionResult;
 
+// Results should not have return type of array.
+// @see "no-return-readonly-array" rule for more info.
+// tslint:disable:readonly-keyword readonly-array
 export interface RuleFunctionResult {
-  readonly invalidNodes: ReadonlyArray<InvalidNode>;
-  readonly skipChildren?: boolean;
+  readonly invalidNodes: Array<InvalidNodeResult>;
+  readonly skipChildren: boolean;
 }
 
-export interface InvalidNode {
+export interface InvalidNodeResult {
   readonly node: ts.Node;
   readonly failureMessage: string;
-  readonly replacements: ReadonlyArray<Lint.Replacement>;
-}
-
-// tslint:disable:readonly-keyword readonly-array
-interface MutableInvalidNode {
-  node: ts.Node;
-  failureMessage: string;
-  replacements: Array<Lint.Replacement>;
+  readonly replacements: Array<Lint.Replacement>;
 }
 // tslint:enable:readonly-keyword readonly-array
 
@@ -54,10 +45,10 @@ interface RuleOptions {
 }
 
 /**
- * Create a Rule class from a rule function.
+ * Create a Rule class from a rule function that analyzes nodes one by one.
  */
 export function createNodeRule<TOptions extends RuleOptions>(
-  ruleFunction: NodeRuleFunction<TOptions>,
+  ruleFunction: UntypedNodeRuleFunction<TOptions>,
   doParseOptions: ParseOptionsFunction<TOptions> = parseOptions
 ): { new (): Lint.Rules.AbstractRule } {
   // @ts-ignore
@@ -70,7 +61,7 @@ export function createNodeRule<TOptions extends RuleOptions>(
       return this.applyWithFunction(
         sourceFile,
         (ctx) => {
-          walk(ctx, ruleFunction);
+          walk(ctx, (node) => ruleFunction(node, ctx));
         },
         doParseOptions(this.ruleArguments)
       );
@@ -79,7 +70,8 @@ export function createNodeRule<TOptions extends RuleOptions>(
 }
 
 /**
- * Create a Rule class from a rule function that uses type information.
+ * Create a Rule class from a rule function that analyzes nodes one by one
+ * and uses type information.
  */
 export function createNodeTypedRule<TOptions extends RuleOptions>(
   ruleFunction: TypedNodeRuleFunction<TOptions>,
@@ -98,7 +90,7 @@ export function createNodeTypedRule<TOptions extends RuleOptions>(
       return this.applyWithFunction(
         sourceFile,
         (ctx, checker: ts.TypeChecker) => {
-          walk(ctx, ruleFunction, checker);
+          walk(ctx, (node) => ruleFunction(node, ctx, checker));
         },
         doParseOptions(this.ruleArguments),
         program.getTypeChecker()
@@ -112,17 +104,13 @@ export function createNodeTypedRule<TOptions extends RuleOptions>(
  */
 function walk<TOptions>(
   ctx: Lint.WalkContext<TOptions>,
-  ruleFunction: NodeRuleFunction<TOptions>,
-  checker?: ts.TypeChecker
+  ruleFunction: (node: ts.Node) => RuleFunctionResult
 ): void {
   const cb = (node: ts.Node): void => {
-    const { invalidNodes, skipChildren } =
-      checker === undefined
-        ? (ruleFunction as UntypedNodeRuleFunction<TOptions>)(node, ctx)
-        : (ruleFunction as TypedNodeRuleFunction<TOptions>)(node, ctx, checker);
+    const { invalidNodes, skipChildren } = ruleFunction(node);
     reportInvalidNodes(invalidNodes, ctx);
 
-    if (skipChildren === true) {
+    if (skipChildren) {
       return;
     }
 
@@ -136,12 +124,12 @@ function walk<TOptions>(
  * Report the invalid nodes.
  */
 function reportInvalidNodes<TOptions>(
-  invalidNodes: ReadonlyArray<InvalidNode>,
+  invalidNodes: ReadonlyArray<InvalidNodeResult>,
   ctx: Lint.WalkContext<TOptions>
 ): void {
   // At this point we are finished with the invalid nodes and so we can
   // safely pass them off with mutable properties.
-  invalidNodes.forEach((invalidNode: MutableInvalidNode) => {
+  invalidNodes.forEach((invalidNode: InvalidNodeResult) => {
     ctx.addFailureAtNode(
       invalidNode.node,
       invalidNode.failureMessage,
@@ -222,6 +210,11 @@ export function markAsInvalidNode(
   node: ts.Node,
   failureMessage: string,
   replacements: ReadonlyArray<Lint.Replacement> = []
-): InvalidNode {
-  return { node, failureMessage, replacements };
+): InvalidNodeResult {
+  return {
+    node,
+    failureMessage,
+    // tslint:disable-next-line: readonly-array
+    replacements: replacements as Array<Lint.Replacement>
+  };
 }

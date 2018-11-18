@@ -3,10 +3,10 @@
  */
 
 import * as fs from 'fs-extra';
-import * as glob from 'glob-promise';
+import glob from 'glob-promise';
 import { createReporter } from 'istanbul-api';
 import { createCoverageMap } from 'istanbul-lib-coverage';
-import * as yaml from 'js-yaml';
+import yaml from 'js-yaml';
 
 (async () => {
   const map = createCoverageMap();
@@ -20,7 +20,7 @@ import * as yaml from 'js-yaml';
   const istanbulConfig = yaml.safeLoad(await fs.readFile('.istanbul.yml', 'utf-8'));
 
   coverageReports.forEach((coverage) => {
-    Object.keys(coverage)
+    Object.keys(coverage.default)
       .forEach((filename) => {
         const relativeFilename = filename.substring(`${process.cwd()}/`.length);
         if (!istanbulConfig.instrumentation.excludes.includes(relativeFilename)) {

@@ -28,7 +28,7 @@
     "lint:ts:src": "tslint --project tsconfig.json",
     "lint:ts:other": "tslint --project tsconfig.tools.json",
     "test": "run-s test:pre test:run test:post --continue-on-error",
-    "test:pre": "del '.nyc_output' 'coverage*'",
+    "test:pre": "del '.nyc_output' '.jest' 'coverage*'",
     "test:run": "run-p test:rules test:common",
     "test:rules": "run-s test:rules:pre test:rules:run-collect-coverage cleanup --continue-on-error",
     "test:rules:pre": "tsc -p tsconfig.test.json",

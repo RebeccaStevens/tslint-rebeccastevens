@@ -3,7 +3,6 @@
   "rules": {
     "missing-jsdoc": false,
     "newline-per-chained-call": false,
-    "no-implicit-dependencies": [true, "dev"],
     "no-import-side-effect": false,
     "no-inferred-empty-object-type": false,
     "no-unnecessary-type-annotation": false
