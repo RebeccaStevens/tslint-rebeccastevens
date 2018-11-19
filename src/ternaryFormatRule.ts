@@ -763,6 +763,7 @@ function isOnLine(
   lineNumber: number
 ): boolean {
   const nodeInfo = getStartAndEndInfo(node);
+
   return nodeInfo.end.line === lineNumber;
 }
 
@@ -786,12 +787,15 @@ function getIndentationOfLine(
   sourceFile: ts.SourceFile
 ): number {
   const lineRanges = getLineRanges(sourceFile);
+
   if (lineNumber >= lineRanges.length || lineNumber < 0) {
     return 0;
   }
+
   const lineRange = lineRanges[lineNumber];
   const line = sourceFile.text.substring(lineRange.pos, lineRange.pos + lineRange.contentLength);
   const indentEnd = line.search(/\S/);
+
   return (
     indentEnd === -1
       ? 0
