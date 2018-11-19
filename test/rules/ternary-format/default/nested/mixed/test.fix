@@ -1,0 +1,26 @@
+const foo = 
+    conditionA
+  ?   conditionB
+    ?   conditionC
+      ? doU()
+      : doV()
+    : conditionD
+    ? doW()
+    : doX()
+  : conditionE
+    ? doY()
+    : doZ();
+
+const foo = 
+    conditionA
+  ?   conditionB
+    ?   conditionC
+      ? doU()
+      : doV()
+    : conditionD
+    ? doW()
+    : doX()
+  : conditionE
+    ? doY()
+    : doZ();
+
