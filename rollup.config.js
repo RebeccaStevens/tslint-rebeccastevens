@@ -7,6 +7,7 @@ import rollupPluginCommonjs from 'rollup-plugin-commonjs';
 import rollupPluginNodeResolve from 'rollup-plugin-node-resolve';
 import { terser as rollupPluginTerser } from 'rollup-plugin-terser';
 import rollupPluginTypescript from 'rollup-plugin-typescript';
+import rollupPluginUnassert from 'rollup-plugin-unassert';
 
 import glob from 'glob';
 
@@ -29,6 +30,9 @@ export default {
 
   external: [
     'tslint',
+    'tsutils',
+    'tsutils/typeguard',
+    'tsutils/util',
     'typescript'
   ],
 
@@ -36,6 +40,9 @@ export default {
     rollupPluginNodeResolve(),
     rollupPluginCommonjs(commonjsConfig),
     rollupPluginTypescript(),
+    rollupPluginUnassert({
+      include: './src/**/*.ts'
+    }),
     rollupPluginTerser(terserConfig)
   ],
 
