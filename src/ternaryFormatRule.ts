@@ -115,41 +115,86 @@ function getIdealConditionalExpression(
   node: ts.ConditionalExpression,
   ctx: Lint.WalkContext<RuleOptions>,
   nodeInfo: ConditionalExpressionInfo,
-  branch?: Branch
+  branch?: Branch,
+  hasMixedParent: boolean = false
 ): IdealConditionalExpression {
   const trueFlowing = isConditionalExpression(node.whenTrue);
   const falseFlowing = isConditionalExpression(node.whenFalse);
 
   if (trueFlowing && falseFlowing) {
-    return getIdealMixedFlowing(node, ctx, nodeInfo);
+    return getIdealMixedFlowing(node, ctx, nodeInfo, branch, hasMixedParent);
   }
 
   if (trueFlowing && !falseFlowing) {
-    return getIdealTrueFlowing(node, ctx, nodeInfo);
+    return getIdealTrueFlowing(node, ctx, nodeInfo, branch, hasMixedParent);
   }
 
   if (!trueFlowing && falseFlowing) {
-    return getIdealFalseFlowing(node, ctx, nodeInfo);
+    return getIdealFalseFlowing(node, ctx, nodeInfo, branch, hasMixedParent);
   }
 
-  if (branch !== undefined) {
-    return getIdealNested(node, ctx, nodeInfo, branch);
-  }
-
-  return getIdealLone(node, ctx, nodeInfo);
+  return getIdealNonFlowing(node, ctx, nodeInfo, branch, hasMixedParent);
 }
 
 /**
  * Get the ideal conditional expression for a mixed-flowing ternary operator.
  */
 function getIdealMixedFlowing(
-  _node: ts.ConditionalExpression,
-  _ctx: Lint.WalkContext<RuleOptions>,
-  nodeInfo: ConditionalExpressionInfo
+  node: ts.ConditionalExpression,
+  ctx: Lint.WalkContext<RuleOptions>,
+  nodeInfo: ConditionalExpressionInfo,
+  branch: Branch | undefined,
+  hasMixedParent: boolean
 ): IdealConditionalExpression {
-  // TODO: Implement.
-  // BODY: Implement mixed nested case.
-  return conditionalExpressionInfoToIdealConditionalExpression(nodeInfo);
+  const condition = getIdealConditionPosition(
+    node,
+    node.condition,
+    nodeInfo.condition,
+    branch === undefined,
+    hasMixedParent ? INDENTATION.length : 0
+  );
+
+  const questionToken = getIdealTokenPosition(
+    node.questionToken,
+    condition.position.end.line,
+    condition.position.start.character
+  );
+
+  const whenTrue = {
+    ...getIdealBranchPosition(node.whenTrue, nodeInfo.whenTrue, questionToken.position.end),
+    nested: getIdealConditionalExpression(
+      node.whenTrue as ts.ConditionalExpression,
+      ctx,
+      getConditionalExpressionInfo(node.whenTrue as ts.ConditionalExpression),
+      Branch.True,
+      true
+    )
+  };
+
+  const colonToken = getIdealTokenPosition(
+    node.colonToken,
+    whenTrue.position.end.line,
+    condition.position.start.character
+  );
+
+  const whenFalse = {
+    ...getIdealBranchPosition(node.whenFalse, nodeInfo.whenFalse, colonToken.position.end),
+    nested: getIdealConditionalExpression(
+      node.whenFalse as ts.ConditionalExpression,
+      ctx,
+      getConditionalExpressionInfo(node.whenFalse as ts.ConditionalExpression),
+      Branch.False,
+      true
+    )
+  };
+
+  return {
+    condition,
+    questionToken,
+    whenTrue,
+    colonToken,
+    whenFalse
+  };
 }
 
 /**
@@ -158,23 +203,26 @@ function getIdealMixedFlowing(
 function getIdealTrueFlowing(
   node: ts.ConditionalExpression,
   ctx: Lint.WalkContext<RuleOptions>,
-  nodeInfo: ConditionalExpressionInfo
+  nodeInfo: ConditionalExpressionInfo,
+  branch: Branch | undefined,
+  hasMixedParent: boolean
 ): IdealConditionalExpression {
   const condition = getIdealConditionPosition(
     node,
     node.condition,
     nodeInfo.condition,
-    INDENTATION.length
+    branch === undefined,
+    hasMixedParent ? 0 : INDENTATION.length
   );
 
   const questionToken = getIdealTokenPosition(
     node.questionToken,
     condition.position.end.line,
     condition.position.start.character,
-    -INDENTATION.length
+    hasMixedParent ? 0 : -INDENTATION.length
   );
 
-  const whenTrueNotTrueFlowing = getIdealBranchPosition(node.whenTrue, nodeInfo.whenTrue, questionToken.position.end, 0);
+  const whenTrueNotTrueFlowing = getIdealBranchPosition(node.whenTrue, nodeInfo.whenTrue, questionToken.position.end);
   const whenTrue = {
     ...whenTrueNotTrueFlowing,
     position: {
@@ -191,14 +239,14 @@ function getIdealTrueFlowing(
             ? INDENTATION.length
             : 0
           )
-
       }
     },
     nested: getIdealConditionalExpression(
       node.whenTrue  as ts.ConditionalExpression,
       ctx,
       getConditionalExpressionInfo(node.whenTrue  as ts.ConditionalExpression),
-      Branch.True
+      Branch.True,
+      hasMixedParent
     )
   };
 
@@ -206,14 +254,13 @@ function getIdealTrueFlowing(
     node.colonToken,
     whenTrue.position.end.line,
     condition.position.start.character,
-    -INDENTATION.length
+    hasMixedParent ? 0 : -INDENTATION.length
   );
 
   const whenFalse = getIdealBranchPosition(
     node.whenFalse,
     nodeInfo.whenFalse,
-    colonToken.position.end,
-    0
+    colonToken.position.end
   );
 
   return {
@@ -231,12 +278,15 @@ function getIdealTrueFlowing(
 function getIdealFalseFlowing(
   node: ts.ConditionalExpression,
   ctx: Lint.WalkContext<RuleOptions>,
-  nodeInfo: ConditionalExpressionInfo
+  nodeInfo: ConditionalExpressionInfo,
+  branch: Branch | undefined,
+  hasMixedParent: boolean
 ): IdealConditionalExpression {
   const condition = getIdealConditionPosition(
     node,
     node.condition,
     nodeInfo.condition,
+    branch === undefined,
     INDENTATION.length
   );
 
@@ -244,30 +294,30 @@ function getIdealFalseFlowing(
     node.questionToken,
     condition.position.end.line,
     condition.position.start.character,
-    -INDENTATION.length
+    INDENTATION.length * (hasMixedParent ? 1 : -1)
   );
 
   const whenTrue = getIdealBranchPosition(
     node.whenTrue,
     nodeInfo.whenTrue,
-    questionToken.position.end,
-    0
+    questionToken.position.end
   );
 
   const colonToken = getIdealTokenPosition(
     node.colonToken,
     whenTrue.position.end.line,
     condition.position.start.character,
-    -INDENTATION.length
+    INDENTATION.length * (hasMixedParent ? 1 : -1)
   );
 
   const whenFalse = {
-    ...getIdealBranchPosition(node.whenFalse, nodeInfo.whenFalse, colonToken.position.end, 0),
+    ...getIdealBranchPosition(node.whenFalse, nodeInfo.whenFalse, colonToken.position.end),
     nested: getIdealConditionalExpression(
       node.whenFalse as ts.ConditionalExpression,
       ctx,
       getConditionalExpressionInfo(node.whenFalse as ts.ConditionalExpression),
-      Branch.False
+      Branch.False,
+      hasMixedParent
     )
   };
 
@@ -281,68 +331,16 @@ function getIdealFalseFlowing(
 }
 
 /**
- * Get the ideal conditional expression for a nested ternary operator.
+ * Get the ideal conditional expression for a non-flowing ternary operator.
  */
-function getIdealNested(
-  node: ts.ConditionalExpression,
-  _ctx: Lint.WalkContext<RuleOptions>,
-  nodeInfo: ConditionalExpressionInfo,
-  branch: Branch
-): IdealConditionalExpression {
-  const condition = getIdealConditionPosition(
-    node,
-    node.condition,
-    nodeInfo.condition,
-    INDENTATION.length * (branch === Branch.True ? 2 : 1),
-    false
-  );
-
-  const questionToken = getIdealTokenPosition(
-    node.questionToken,
-    condition.position.end.line,
-    condition.position.start.character,
-    -INDENTATION.length
-  );
-
-  const whenTrue = getIdealBranchPosition(
-    node.whenTrue,
-    nodeInfo.whenTrue,
-    questionToken.position.end,
-    0
-  );
-
-  const colonToken = getIdealTokenPosition(
-    node.colonToken,
-    whenTrue.position.end.line,
-    condition.position.start.character,
-    -INDENTATION.length
-  );
-
-  const whenFalse = getIdealBranchPosition(
-    node.whenFalse,
-    nodeInfo.whenFalse,
-    colonToken.position.end,
-    0
-  );
-
-  return {
-    condition,
-    questionToken,
-    whenTrue,
-    colonToken,
-    whenFalse
-  };
-}
-
-/**
- * Get the ideal conditional expression for a lone (non-nested, non-flowing) ternary operator.
- */
-function getIdealLone(
+function getIdealNonFlowing(
   node: ts.ConditionalExpression,
   ctx: Lint.WalkContext<RuleOptions>,
-  nodeInfo: ConditionalExpressionInfo
+  nodeInfo: ConditionalExpressionInfo,
+  branch: Branch | undefined,
+  hasMixedParent: boolean
 ): IdealConditionalExpression {
-  if (Boolean(ctx.options.allowSingleLine)) {
+  if (branch === undefined && Boolean(ctx.options.allowSingleLine)) {
     const onSingleLine = nodeInfo.condition.start.line === nodeInfo.whenFalse.end.line;
     if (onSingleLine) {
       return conditionalExpressionInfoToIdealConditionalExpression(nodeInfo);
@@ -353,35 +351,52 @@ function getIdealLone(
     node,
     node.condition,
     nodeInfo.condition,
-    0
+    branch === undefined,
+    INDENTATION.length * (
+        branch === Branch.True
+      ? 2
+      : branch === Branch.False
+      ? 1
+      : 0
+    )
   );
 
   const questionToken = getIdealTokenPosition(
     node.questionToken,
     condition.position.end.line,
     condition.position.start.character,
-    INDENTATION.length
+    INDENTATION.length * (
+        hasMixedParent
+      ? 0
+      : branch === undefined
+      ? 1
+      : -1
+    )
   );
 
   const whenTrue = getIdealBranchPosition(
     node.whenTrue,
     nodeInfo.whenTrue,
-    questionToken.position.end,
-    0
+    questionToken.position.end
   );
 
   const colonToken = getIdealTokenPosition(
     node.colonToken,
     whenTrue.position.end.line,
     condition.position.start.character,
-    INDENTATION.length
+    INDENTATION.length * (
+        hasMixedParent
+      ? 0
+      : branch === undefined
+      ? 1
+      : -1
+    )
   );
 
   const whenFalse = getIdealBranchPosition(
     node.whenFalse,
     nodeInfo.whenFalse,
-    colonToken.position.end,
-    0
+    colonToken.position.end
   );
 
   return {
@@ -400,11 +415,19 @@ function compareIdealToActual(
   node: ts.ConditionalExpression,
   idealInfo: IdealConditionalExpression,
   actualPosition: ConditionalExpressionInfo,
-  branch?: Branch
+  branch?: Branch,
+  hasMixedParent: boolean = false
 ): Array<InvalidNodeResult> {
   const isParent =
     idealInfo.whenTrue.nested !== undefined ||
     idealInfo.whenFalse.nested !== undefined;
+
+  const isMixed =
+    hasMixedParent ||
+    (
+      idealInfo.whenTrue.nested !== undefined &&
+      idealInfo.whenFalse.nested !== undefined
+    );
 
   const trueNestedInvalidNodes =
     idealInfo.whenTrue.nested === undefined
@@ -413,7 +436,8 @@ function compareIdealToActual(
           node.whenTrue as ts.ConditionalExpression,
           idealInfo.whenTrue.nested,
           getConditionalExpressionInfo(node.whenTrue as ts.ConditionalExpression),
-          Branch.True
+          Branch.True,
+          isMixed
         );
 
   const falseNestedInvalidNodes =
@@ -423,7 +447,8 @@ function compareIdealToActual(
           node.whenFalse as ts.ConditionalExpression,
           idealInfo.whenFalse.nested,
           getConditionalExpressionInfo(node.whenFalse as ts.ConditionalExpression),
-          Branch.False
+          Branch.False,
+          isMixed
         );
 
   if (
@@ -448,14 +473,16 @@ function compareIdealToActual(
   const conditionLinesAbove =
     idealInfo.condition.position.start.line - actualPosition.condition.end.line;
   const conditionSpacesBefore =
-    (branch === Branch.True ? INDENTATION.length : 0) +
-    (
-        conditionLinesAbove > 0
-      ? idealInfo.condition.position.start.character
-      : isParent
-      ? INDENTATION.length
-      : 0
-    );
+    hasMixedParent
+      ? 0
+      : (branch === Branch.True ? INDENTATION.length : 0) +
+        (
+            conditionLinesAbove > 0
+          ? idealInfo.condition.position.start.character
+          : isParent
+          ? INDENTATION.length
+          : 0
+        );
 
   const questionTokenLinesAbove =
     idealInfo.questionToken.position.start.line - idealInfo.condition.position.end.line;
@@ -468,36 +495,50 @@ function compareIdealToActual(
   const colonTokenSpacesBefore =
     idealInfo.colonToken.position.start.character - (colonTokenLinesAbove === 0 ? INDENTATION.length : 0);
 
-  return [markAsInvalidNode(
-    node,
-    failureMessage, [
-    new Lint.Replacement(
-      node.getStart(),
-      node.getWidth(),
-      (
-        `${'\n'.repeat(conditionLinesAbove)
-        }${formatCode(node.condition.getText(), conditionSpacesBefore)
-        }${formatComment(idealInfo.condition.trailingComment)
+  return [
+    markAsInvalidNode(
+      node,
+      failureMessage,
+      [
+        new Lint.Replacement(
+          node.getStart(),
+          node.getWidth(),
+          (
+            `${'\n'.repeat(conditionLinesAbove)
+            }${formatCode(node.condition.getText(), conditionSpacesBefore)
+            }${formatComment(idealInfo.condition.trailingComment, 1, false)
 
-        }${'\n'
-        }${formatComment(idealInfo.questionToken.leadingComment, questionTokenSpacesBefore, true)
-        }${formatCode(node.questionToken.getText(), questionTokenSpacesBefore)
+            }${'\n'
+            }${formatComment(idealInfo.questionToken.leadingComment, questionTokenSpacesBefore, true)
+            }${formatCode(node.questionToken.getText(), questionTokenSpacesBefore)
 
-        }${formatCode(trueNestedInvalidNodes.length === 0 ? node.whenTrue.getText() : trueNestedInvalidNodes, 1)
-        }${formatComment(idealInfo.questionToken.trailingComment)
-        }${formatComment(idealInfo.whenTrue.leadingComment)
-        }${formatComment(idealInfo.whenTrue.trailingComment)
+            }${formatCode(
+              trueNestedInvalidNodes.length === 0
+                ? node.whenTrue.getText()
+                : trueNestedInvalidNodes,
+              1
+            )
+            }${formatComment(idealInfo.questionToken.trailingComment, 1, false)
+            }${formatComment(idealInfo.whenTrue.leadingComment, 1, false)
+            }${formatComment(idealInfo.whenTrue.trailingComment, 1, false)
 
-        }${'\n'
-        }${formatComment(idealInfo.colonToken.leadingComment, colonTokenSpacesBefore, true)
-        }${formatCode(node.colonToken.getText(), colonTokenSpacesBefore)
+            }${'\n'
+            }${formatComment(idealInfo.colonToken.leadingComment, colonTokenSpacesBefore, true)
+            }${formatCode(node.colonToken.getText(), colonTokenSpacesBefore)
 
-        }${formatCode(falseNestedInvalidNodes.length === 0 ? node.whenFalse.getText() : falseNestedInvalidNodes, 1)
-        }${formatComment(idealInfo.colonToken.trailingComment)
-        }${formatComment(idealInfo.whenFalse.leadingComment)}`
-      )
+            }${formatCode(
+              falseNestedInvalidNodes.length === 0
+                ? node.whenFalse.getText()
+                : falseNestedInvalidNodes,
+              1
+            )
+            }${formatComment(idealInfo.colonToken.trailingComment, 1, false)
+            }${formatComment(idealInfo.whenFalse.leadingComment, 1, false)}`
+          )
+        )
+      ]
     )
-  ])];
+  ];
 }
 
 /**
@@ -507,8 +548,8 @@ function getIdealConditionPosition(
   conditionalExpression: ts.ConditionalExpression,
   node: ts.Expression,
   info: StartAndEndInfo,
-  indentOffset: number,
-  insertNewLine: boolean = true
+  insertLeadingNewLine: boolean,
+  indentOffset: number = 0
 ): IdealPosition {
   const siblingBefore = getSiblingBefore(conditionalExpression);
 
@@ -528,7 +569,7 @@ function getIdealConditionPosition(
   const indentAmount =
     indentOffset +
     (
-      insertNewLine
+      insertLeadingNewLine
         ? getIndentationOfLine(
             info.start.line - (conditionOnSameLineAsPreviousSibling ? 0 : 1),
             node.getSourceFile()
@@ -536,8 +577,8 @@ function getIdealConditionPosition(
             !(
               leadingCommentHasTrailingNewLine ||
               (
-                // Ternaries in call expressions should not be indented more than the previous
-                // line unless it is the first argument.
+                // Ternaries in call expressions should not be indented more than
+                // the previous line unless it is the first argument.
                 !conditionOnSameLineAsPreviousSibling &&
                 isCallExpression(conditionalExpression.parent) &&
                 conditionalExpression.parent.arguments[0] !== conditionalExpression
@@ -550,7 +591,7 @@ function getIdealConditionPosition(
     );
 
   const lineOffset =
-    conditionOnSameLineAsPreviousSibling && insertNewLine
+    conditionOnSameLineAsPreviousSibling && insertLeadingNewLine
       ? 1
       : 0;
 
@@ -576,7 +617,7 @@ function getIdealTokenPosition(
   node: ts.Token<ts.SyntaxKind.QuestionToken> | ts.Token<ts.SyntaxKind.ColonToken>,
   previousLine: number,
   conditionIndentation: number,
-  indentOffset: number
+  indentOffset: number = 0
 ): IdealPosition {
   const {
     comment: leadingComment,
@@ -610,7 +651,7 @@ function getIdealBranchPosition(
   node: ts.Expression,
   info: StartAndEndInfo,
   tokenPosition: ts.LineAndCharacter,
-  indentOffset: number
+  indentOffset: number = 0
 ): IdealPosition {
   const lineCount = (info.end.line - info.start.line) + 1;
 
@@ -820,8 +861,8 @@ function formatCode(
  */
 function formatComment(
   comment: string | undefined,
-  indent: number = 1,
-  trailingNewLine: boolean = false
+  indent: number,
+  trailingNewLine: boolean
 ): string {
   return (
     comment === undefined

@@ -1,17 +1,33 @@
 const foo = 
-    conditionA
-  ?   conditionB
-    ?   conditionC
-      ? doU()
-      : doV()
-    : conditionD
-    ? doW()
-    : doX()
-  : conditionE
-    ? doY()
-    : doZ();
+  conditionA
+  ? conditionB
+    ? getW()
+    : getX()
+  : conditionC
+    ? getY()
+    : getZ();
 
-const foo = conditionA ? conditionB ? conditionC ? doU() : doV() : conditionD ? doW() : doX() : conditionE ? doY() : doZ();
-            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [failure]
+const foo = conditionA ? conditionB ? getW() : getX() : conditionC ? getY() : getZ();
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [failure]
+
+const foo = 
+  conditionA
+  ? conditionB
+    ? conditionC
+      ? getS()
+      : getT()
+    : conditionD
+      ? conditionE
+        ? getU()
+        : getV()
+      : getW()
+  : conditionF
+    ? getX()
+    : conditionG
+      ? getY()
+      : getZ();
+
+const foo = conditionA ? conditionB ? conditionC ? getS() : getT() : conditionD ? conditionE ? getU() : getV() : getW() : conditionF ? getX() : conditionG ? getY() : getZ();
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [failure]
 
 [failure]: Incorrectly formatted ternary operator.

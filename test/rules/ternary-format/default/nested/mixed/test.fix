@@ -1,26 +1,52 @@
 const foo = 
-    conditionA
-  ?   conditionB
-    ?   conditionC
-      ? doU()
-      : doV()
-    : conditionD
-    ? doW()
-    : doX()
-  : conditionE
-    ? doY()
-    : doZ();
+  conditionA
+  ? conditionB
+    ? getW()
+    : getX()
+  : conditionC
+    ? getY()
+    : getZ();
 
 const foo = 
-    conditionA
-  ?   conditionB
-    ?   conditionC
-      ? doU()
-      : doV()
+  conditionA
+  ? conditionB
+    ? getW()
+    : getX()
+  : conditionC
+    ? getY()
+    : getZ();
+
+const foo = 
+  conditionA
+  ? conditionB
+    ? conditionC
+      ? getS()
+      : getT()
     : conditionD
-    ? doW()
-    : doX()
-  : conditionE
-    ? doY()
-    : doZ();
+      ? conditionE
+        ? getU()
+        : getV()
+      : getW()
+  : conditionF
+    ? getX()
+    : conditionG
+      ? getY()
+      : getZ();
+
+const foo = 
+  conditionA
+  ? conditionB
+    ? conditionC
+      ? getS()
+      : getT()
+    : conditionD
+      ? conditionE
+        ? getU()
+        : getV()
+      : getW()
+  : conditionF
+    ? getX()
+    : conditionG
+      ? getY()
+      : getZ();
 
