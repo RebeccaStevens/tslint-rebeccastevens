@@ -147,7 +147,6 @@ function getIdealMixedFlowing(
   hasMixedParent: boolean
 ): IdealConditionalExpression {
   const condition = getIdealConditionPosition(
-    node,
     node.condition,
     nodeInfo.condition,
     branch === undefined,
@@ -208,7 +207,6 @@ function getIdealTrueFlowing(
   hasMixedParent: boolean
 ): IdealConditionalExpression {
   const condition = getIdealConditionPosition(
-    node,
     node.condition,
     nodeInfo.condition,
     branch === undefined,
@@ -283,7 +281,6 @@ function getIdealFalseFlowing(
   hasMixedParent: boolean
 ): IdealConditionalExpression {
   const condition = getIdealConditionPosition(
-    node,
     node.condition,
     nodeInfo.condition,
     branch === undefined,
@@ -348,12 +345,13 @@ function getIdealNonFlowing(
   }
 
   const condition = getIdealConditionPosition(
-    node,
     node.condition,
     nodeInfo.condition,
     branch === undefined,
     INDENTATION.length * (
-        branch === Branch.True
+        hasMixedParent
+      ? 0
+      : branch === Branch.True
       ? 2
       : branch === Branch.False
       ? 1
@@ -367,10 +365,12 @@ function getIdealNonFlowing(
     condition.position.start.character,
     INDENTATION.length * (
         hasMixedParent
-      ? 0
+      ? 2
       : branch === undefined
       ? 1
-      : -1
+      : branch === Branch.False
+      ? -1
+      : 0
     )
   );
 
@@ -386,10 +386,12 @@ function getIdealNonFlowing(
     condition.position.start.character,
     INDENTATION.length * (
         hasMixedParent
-      ? 0
+      ? 2
       : branch === undefined
       ? 1
-      : -1
+      : branch === Branch.False
+      ? -1
+      : 0
     )
   );
 
@@ -495,6 +497,18 @@ function compareIdealToActual(
   const colonTokenSpacesBefore =
     idealInfo.colonToken.position.start.character - (colonTokenLinesAbove === 0 ? INDENTATION.length : 0);
 
+  console.log(node.getText());
+  console.log(JSON.stringify({
+    actual: actualPosition,
+    ideal: {
+      condition: idealInfo.condition.position,
+      questionToken: idealInfo.questionToken.position,
+      whenTrue: idealInfo.whenTrue.position,
+      colonToken: idealInfo.colonToken.position,
+      whenFalse: idealInfo.whenFalse.position
+    }
+  }, undefined, 2));
+
   return [
     markAsInvalidNode(
       node,
@@ -545,13 +559,12 @@ function compareIdealToActual(
  * Get the ideal position for the condition.
  */
 function getIdealConditionPosition(
-  conditionalExpression: ts.ConditionalExpression,
   node: ts.Expression,
   info: StartAndEndInfo,
   insertLeadingNewLine: boolean,
   indentOffset: number = 0
 ): IdealPosition {
-  const siblingBefore = getSiblingBefore(conditionalExpression);
+  const siblingBefore = getSiblingBefore(node.parent);
 
   const conditionOnSameLineAsPreviousSibling =
     siblingBefore === undefined
@@ -566,28 +579,28 @@ function getIdealConditionPosition(
     comment: trailingComment
   } = getTrailingCommentInfo(node);
 
+  const siblingIndent = getIndentationOfLine(
+    info.start.line - (conditionOnSameLineAsPreviousSibling ? 0 : 1),
+    node.getSourceFile()
+  );
+
   const indentAmount =
     indentOffset +
     (
-      insertLeadingNewLine
-        ? getIndentationOfLine(
-            info.start.line - (conditionOnSameLineAsPreviousSibling ? 0 : 1),
-            node.getSourceFile()
-          ) + (
-            !(
-              leadingCommentHasTrailingNewLine ||
-              (
-                // Ternaries in call expressions should not be indented more than
-                // the previous line unless it is the first argument.
-                !conditionOnSameLineAsPreviousSibling &&
-                isCallExpression(conditionalExpression.parent) &&
-                conditionalExpression.parent.arguments[0] !== conditionalExpression
-              )
-            )
-              ? INDENTATION.length
-              : 0
+      siblingIndent + (
+        insertLeadingNewLine && !(
+          leadingCommentHasTrailingNewLine ||
+          (
+            // Ternaries in call expressions should not be indented more than
+            // the previous line unless it is the first argument.
+            !conditionOnSameLineAsPreviousSibling &&
+            isCallExpression(node.parent.parent) &&
+            node.parent.parent.arguments[0] !== node.parent
           )
-        : INDENTATION.length
+        )
+          ? INDENTATION.length
+          : 0
+      )
     );
 
   const lineOffset =
