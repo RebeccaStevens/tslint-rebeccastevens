@@ -47,8 +47,8 @@ interface StartAndEndInfo {
 }
 
 interface IdealPosition {
-  readonly leadingComment?: string;
-  readonly trailingComment?: string;
+  readonly leadingComment?: CommentInfo;
+  readonly trailingComment?: CommentInfo;
   readonly position: StartAndEndInfo;
   readonly nested?: IdealConditionalExpression;
 }
@@ -417,13 +417,9 @@ function compareIdealToActual(
   node: ts.ConditionalExpression,
   idealInfo: IdealConditionalExpression,
   actualPosition: ConditionalExpressionInfo,
-  branch?: Branch,
+  _branch?: Branch,
   hasMixedParent: boolean = false
 ): Array<InvalidNodeResult> {
-  const isParent =
-    idealInfo.whenTrue.nested !== undefined ||
-    idealInfo.whenFalse.nested !== undefined;
-
   const isMixed =
     hasMixedParent ||
     (
@@ -472,42 +468,23 @@ function compareIdealToActual(
     ];
   }
 
-  const conditionLinesAbove =
-    idealInfo.condition.position.start.line - actualPosition.condition.end.line;
-  const conditionSpacesBefore =
-    hasMixedParent
-      ? 0
-      : (branch === Branch.True ? INDENTATION.length : 0) +
-        (
-            conditionLinesAbove > 0
-          ? idealInfo.condition.position.start.character
-          : isParent
-          ? INDENTATION.length
-          : 0
-        );
+  const idealCode = getIdealCode(
+    node,
+    actualPosition,
+    idealInfo
+  );
 
-  const questionTokenLinesAbove =
-    idealInfo.questionToken.position.start.line - idealInfo.condition.position.end.line;
-  const questionTokenSpacesBefore =
-    idealInfo.questionToken.position.start.character -
-    (questionTokenLinesAbove === 0 ? conditionSpacesBefore + 1 : 0);
-
-  const colonTokenLinesAbove =
-    idealInfo.colonToken.position.start.line - idealInfo.whenTrue.position.end.line;
-  const colonTokenSpacesBefore =
-    idealInfo.colonToken.position.start.character - (colonTokenLinesAbove === 0 ? INDENTATION.length : 0);
-
-  console.log(node.getText());
-  console.log(JSON.stringify({
-    actual: actualPosition,
-    ideal: {
-      condition: idealInfo.condition.position,
-      questionToken: idealInfo.questionToken.position,
-      whenTrue: idealInfo.whenTrue.position,
-      colonToken: idealInfo.colonToken.position,
-      whenFalse: idealInfo.whenFalse.position
-    }
-  }, undefined, 2));
+  // console.log(node.getText());
+  // console.log(JSON.stringify({
+  //   actual: actualPosition,
+  //   ideal: {
+  //     condition: idealInfo.condition.position,
+  //     questionToken: idealInfo.questionToken.position,
+  //     whenTrue: idealInfo.whenTrue.position,
+  //     colonToken: idealInfo.colonToken.position,
+  //     whenFalse: idealInfo.whenFalse.position
+  //   }
+  // }, undefined, 2));
 
   return [
     markAsInvalidNode(
@@ -517,38 +494,7 @@ function compareIdealToActual(
         new Lint.Replacement(
           node.getStart(),
           node.getWidth(),
-          (
-            `${'\n'.repeat(conditionLinesAbove)
-            }${formatCode(node.condition.getText(), conditionSpacesBefore)
-            }${formatComment(idealInfo.condition.trailingComment, 1, false)
-
-            }${'\n'
-            }${formatComment(idealInfo.questionToken.leadingComment, questionTokenSpacesBefore, true)
-            }${formatCode(node.questionToken.getText(), questionTokenSpacesBefore)
-
-            }${formatCode(
-              trueNestedInvalidNodes.length === 0
-                ? node.whenTrue.getText()
-                : trueNestedInvalidNodes,
-              1
-            )
-            }${formatComment(idealInfo.questionToken.trailingComment, 1, false)
-            }${formatComment(idealInfo.whenTrue.leadingComment, 1, false)
-            }${formatComment(idealInfo.whenTrue.trailingComment, 1, false)
-
-            }${'\n'
-            }${formatComment(idealInfo.colonToken.leadingComment, colonTokenSpacesBefore, true)
-            }${formatCode(node.colonToken.getText(), colonTokenSpacesBefore)
-
-            }${formatCode(
-              falseNestedInvalidNodes.length === 0
-                ? node.whenFalse.getText()
-                : falseNestedInvalidNodes,
-              1
-            )
-            }${formatComment(idealInfo.colonToken.trailingComment, 1, false)
-            }${formatComment(idealInfo.whenFalse.leadingComment, 1, false)}`
-          )
+          idealCode
         )
       ]
     )
@@ -575,9 +521,7 @@ function getIdealConditionPosition(
     hasTrailingNewLine: leadingCommentHasTrailingNewLine
   } = getLeadingCommentInfo(node);
 
-  const {
-    comment: trailingComment
-  } = getTrailingCommentInfo(node);
+  const trailingComment = getTrailingCommentInfo(node);
 
   const siblingIndent = getIndentationOfLine(
     info.start.line - (conditionOnSameLineAsPreviousSibling ? 0 : 1),
@@ -632,25 +576,20 @@ function getIdealTokenPosition(
   conditionIndentation: number,
   indentOffset: number = 0
 ): IdealPosition {
-  const {
-    comment: leadingComment,
-    lines: leadingCommentLines
-  } = getLeadingCommentInfo(node);
+  const leadingComment = getLeadingCommentInfo(node);
 
-  const {
-    comment: trailingComment
-  } = getTrailingCommentInfo(node);
+  const trailingComment = getTrailingCommentInfo(node);
 
   return {
     leadingComment,
     trailingComment,
     position: {
       start: {
-        line: previousLine + leadingCommentLines + 1,
+        line: previousLine + leadingComment.lines + 1,
         character: conditionIndentation + indentOffset
       },
       end: {
-        line: previousLine + leadingCommentLines + 1,
+        line: previousLine + leadingComment.lines + 1,
         character: conditionIndentation + indentOffset + 1
       }
     }
@@ -667,15 +606,8 @@ function getIdealBranchPosition(
   indentOffset: number = 0
 ): IdealPosition {
   const lineCount = (info.end.line - info.start.line) + 1;
-
-  const {
-    comment: leadingComment,
-    lines: leadingCommentLines
-  } = getLeadingCommentInfo(node);
-
-  const {
-    comment: trailingComment
-  } = getTrailingCommentInfo(node);
+  const leadingComment = getLeadingCommentInfo(node);
+  const trailingComment = getTrailingCommentInfo(node);
 
   return {
     leadingComment,
@@ -683,10 +615,10 @@ function getIdealBranchPosition(
     position: {
       start: {
         line: tokenPosition.line,
-        character: tokenPosition.character + indentOffset + leadingCommentLines + 1
+        character: tokenPosition.character + indentOffset + 1
       },
       end: {
-        line: tokenPosition.line + leadingCommentLines + lineCount - 1,
+        line: tokenPosition.line + leadingComment.lines + lineCount - 1,
         character:
           lineCount === 1
             ? (
@@ -856,7 +788,7 @@ function formatCode(
   code: string | ReadonlyArray<InvalidNodeResult>,
   indent: number
 ): string {
-  if (typeof code === 'string' || code.length === 0 || code[0].replacements.length === 0) {
+  if (typeof code === 'string') {
     return `${' '.repeat(indent)}${code}`;
   }
 
@@ -873,15 +805,183 @@ function formatCode(
  * Format the given comment.
  */
 function formatComment(
-  comment: string | undefined,
+  commentInfo: CommentInfo | undefined,
   indent: number,
-  trailingNewLine: boolean
+  insertTrailingNewLine?: boolean
 ): string {
   return (
-    comment === undefined
+    commentInfo === undefined || commentInfo.comment === undefined
       ? ''
-      : (
-        ' '.repeat(indent) + comment.trim() + (trailingNewLine ? '\n' : '')
-      )
+      : ' '.repeat(indent) +
+        commentInfo.comment.trim() +
+        (
+          insertTrailingNewLine === true ||
+          (insertTrailingNewLine === undefined && commentInfo.hasTrailingNewLine)
+            ? '\n'
+            : ''
+          )
   );
+}
+
+interface IdealCode {
+  readonly code: string;
+  readonly info: {
+    readonly line: number;
+    readonly endLine: number;
+    readonly startCharacter: number;
+    readonly endCharacter: number;
+    readonly unInsertedComments: ReadonlyArray<CommentInfo>;
+  };
+}
+
+/**
+ * Get the ideal code from the ideal info.
+ */
+function getIdealCode(
+  node: ts.ConditionalExpression,
+  originalInfo: ConditionalExpressionInfo,
+  idealInfo: IdealConditionalExpression
+): string {
+  const idealConditionCode = getIdealCodePartial(
+    node.condition,
+    originalInfo.condition,
+    idealInfo.condition,
+    {
+      line: originalInfo.condition.start.line,
+      endLine: originalInfo.condition.start.line,
+      startCharacter: originalInfo.condition.start.character,
+      endCharacter: originalInfo.condition.start.character,
+      unInsertedComments: []
+    }
+  );
+  const idealQuestionTokenCode = getIdealCodePartial(
+    node.questionToken,
+    originalInfo.questionToken,
+    idealInfo.questionToken,
+    idealConditionCode.info
+  );
+  const idealTrueBranchCode = getIdealCodePartial(
+    node.whenTrue,
+    originalInfo.whenTrue,
+    idealInfo.whenTrue,
+    idealQuestionTokenCode.info
+  );
+  const idealColonTokenCode = getIdealCodePartial(
+    node.colonToken,
+    originalInfo.colonToken,
+    idealInfo.colonToken,
+    idealTrueBranchCode.info
+  );
+  const idealFalseBranchCode = getIdealCodePartial(
+    node.whenFalse,
+    originalInfo.whenFalse,
+    idealInfo.whenFalse,
+    idealColonTokenCode.info
+  );
+
+  console.log(
+    `"${idealConditionCode.code
+    }${idealQuestionTokenCode.code
+    }${idealTrueBranchCode.code
+    }${idealColonTokenCode.code
+    }${idealFalseBranchCode.code}"`.replace(/\n/g, '↲\n')
+  );
+
+  return (
+    `${idealConditionCode.code
+    }${idealQuestionTokenCode.code
+    }${idealTrueBranchCode.code
+    }${idealColonTokenCode.code
+    }${idealFalseBranchCode.code}`
+  );
+}
+
+/**
+ * Get the ideal code.
+ */
+function getIdealCodePartial(
+  node: ts.Expression | ts.Token<ts.SyntaxKind.QuestionToken | ts.SyntaxKind.ColonToken>,
+  _originalInfo: StartAndEndInfo,
+  idealInfo: IdealPosition,
+  previousPartialInfo: IdealCode['info']
+): IdealCode {
+  const linesToInsertAbove =
+    idealInfo.position.start.line < previousPartialInfo.line
+      ? 0
+      : idealInfo.position.start.line - previousPartialInfo.line;
+
+  const startLine =
+    previousPartialInfo.endLine +
+    linesToInsertAbove;
+
+  const spacesToInsertBefore =
+    Math.max(
+      startLine === previousPartialInfo.endLine
+        ? idealInfo.position.start.character > previousPartialInfo.endCharacter
+          ? idealInfo.position.start.character - previousPartialInfo.endCharacter
+          : previousPartialInfo.startCharacter + INDENTATION.length
+        : linesToInsertAbove > 0
+          ? idealInfo.position.start.character
+          : 0,
+      0
+    );
+  // if (onSameLine) {
+    console.log(idealInfo.position.start.character, previousPartialInfo.endCharacter);
+  // }
+  const leadingComment = formatComment(idealInfo.leadingComment, spacesToInsertBefore, true);
+  const leadingCommentNewLines = leadingComment.match(/\n/g);
+  const leadingCommentNewLineCount =
+    leadingCommentNewLines === null
+      ? 0
+      : leadingCommentNewLines.length;
+
+  const trailingComment = formatComment(idealInfo.trailingComment, 1, true);
+  const trailingCommentNewLines = trailingComment.match(/\n/g);
+  const trailingCommentNewLineCount =
+    trailingCommentNewLines === null
+      ? 0
+      : trailingCommentNewLines.length;
+
+  const endLine =
+    startLine +
+    (idealInfo.position.end.line - idealInfo.position.start.line) +
+    leadingCommentNewLineCount;
+
+  const unInsertedComments =
+    (
+      linesToInsertAbove > 0
+        ? []
+        : previousPartialInfo.unInsertedComments
+    ).concat(
+      idealInfo.trailingComment === undefined
+        ? []
+        : [idealInfo.trailingComment]
+    );
+
+  const extraLinesToInsertAbove =
+    Math.max(
+      linesToInsertAbove -
+      (leadingCommentNewLineCount > 0 ? 1 : 0),
+      0
+    );
+
+  const line =
+    previousPartialInfo.line +
+    extraLinesToInsertAbove +
+    trailingCommentNewLineCount +
+    (endLine - startLine);
+
+  return {
+    code: `${'\n'.repeat(extraLinesToInsertAbove)
+          }${leadingComment
+          }${formatCode(node.getText(), spacesToInsertBefore)
+          }${trailingComment}`,
+    info: {
+      line,
+      endLine,
+      startCharacter: idealInfo.position.start.character,
+      endCharacter: idealInfo.position.end.character,
+      unInsertedComments
+    }
+  };
 }

@@ -16,20 +16,28 @@ const foo =
   // a
   condition // b
     // c
-    ? getX() // d // e // f
+    ? // d
+      // e
+      getX() // f
     // g
-    : getY() // h // i // j
+    : // h
+      // i
+      getY() // j
     // k;
 
 const foo = /* a */ 
   condition /* b */
     /* c */
-    ? getX() /* d */ /* e */
+    ? /* d */
+      getX() /* e */
     /* f */
-    : getY() /* g */ /* h */;
+    : /* g */
+      getY() /* h */;
 
 const foo = /* a */ 
   condition /* b */
-    ? getX() /* c */ /* d */
-    : getY() /* e */ /* f */;
+    ? /* c */
+      getX() /* d */
+    : /* e */
+      getY() /* f */;
 

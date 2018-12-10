@@ -1,0 +1,13 @@
+const foo = 
+  condition
+    ? getX()
+    : getY();
+
+const foo = /* a */ 
+  condition /* b */
+    /* c */
+    ? /* d */
+      getX() /* e */
+    /* f */
+    : /* g */
+      getY() /* h */;

@@ -1,0 +1,13 @@
+const foo = condition
+            ~~~~~~~~~
+  ? getX()
+~~~~~~~~~~
+  : getY();
+~~~~~~~~~~  [Incorrectly formatted ternary operator.]
+
+const foo = /* a */ condition /* b */
+                    ~~~~~~~~~~~~~~~~~
+/* c */ ? /* d */ getX() /* e */
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/* f */ : /* g */ getY() /* h */;
+~~~~~~~~~~~~~~~~~~~~~~~~          [Incorrectly formatted ternary operator.]
