@@ -26,8 +26,6 @@ export default {
     sourcemap: false
   },
 
-  experimentalCodeSplitting: true,
-
   external: [
     'tslint',
     'tsutils',
