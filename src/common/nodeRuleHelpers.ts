@@ -15,17 +15,38 @@ export type TypedNodeRuleFunction<TOptions> = (
   checker: ts.TypeChecker
 ) => RuleFunctionResult;
 
-// Results should not have return type of array.
-// @see "no-return-readonly-array" rule for more info.
+/*
+ * Results should not have the return type of ReadonlyArray.
+ *
+ * @see "no-return-readonly-array" rule for more info.
+ */
 // tslint:disable:readonly-keyword readonly-array
 export interface RuleFunctionResult {
+  /**
+   * The invalid nodes found by the rule.
+   */
   readonly invalidNodes: Array<InvalidNodeResult>;
+
+  /**
+   * If true, child nodes do not need to be checked.
+   */
   readonly skipChildren: boolean;
 }
 
 export interface InvalidNodeResult {
+  /**
+   * The node that failed the test.
+   */
   readonly node: ts.Node;
+
+  /**
+   * The message explaining the failure.
+   */
   readonly failureMessage: string;
+
+  /**
+   * Any automatic replacements that can be made to fix the problem.
+   */
   readonly replacements: Array<Lint.Replacement>;
 }
 // tslint:enable:readonly-keyword readonly-array
@@ -50,7 +71,7 @@ interface RuleOptions {
 export function createNodeRule<TOptions extends RuleOptions>(
   ruleFunction: UntypedNodeRuleFunction<TOptions>,
   doParseOptions: ParseOptionsFunction<TOptions> = parseOptions
-): { new (): Lint.Rules.AbstractRule } {
+): new () => Lint.Rules.AbstractRule {
   // @ts-ignore
   return class Rule extends Lint.Rules.AbstractRule {
 
@@ -76,7 +97,7 @@ export function createNodeRule<TOptions extends RuleOptions>(
 export function createNodeTypedRule<TOptions extends RuleOptions>(
   ruleFunction: TypedNodeRuleFunction<TOptions>,
   doParseOptions: ParseOptionsFunction<TOptions> = parseOptions
-): { new (): Lint.Rules.TypedRule } {
+): new () => Lint.Rules.TypedRule {
   // @ts-ignore
   return class Rule extends Lint.Rules.TypedRule {
 
@@ -121,14 +142,12 @@ function walk<TOptions>(
 }
 
 /**
- * Report the invalid nodes.
+ * Report the invalid nodes to tslint.
  */
 function reportInvalidNodes<TOptions>(
   invalidNodes: ReadonlyArray<InvalidNodeResult>,
   ctx: Lint.WalkContext<TOptions>
 ): void {
-  // At this point we are finished with the invalid nodes and so we can
-  // safely pass them off with mutable properties.
   invalidNodes.forEach((invalidNode: InvalidNodeResult) => {
     ctx.addFailureAtNode(
       invalidNode.node,
@@ -178,7 +197,7 @@ export function parseOptions<TOptions extends RuleOptions>(
 /**
  * Create a camelCase version of the string passed in.
  *
- * Words must be seperated by either a dash (-) or an underscore (_).
+ * Note: Words must be seperated by either a dash (-) or an underscore (_).
  */
 function camelize(text: string): string {
   const words = text.split(/[-_]/g);
@@ -204,7 +223,7 @@ function upFirstCharacter(word: string): string {
 }
 
 /**
- * Mark the given node as invalid
+ * Mark the given node as invalid.
  */
 export function markAsInvalidNode(
   node: ts.Node,
