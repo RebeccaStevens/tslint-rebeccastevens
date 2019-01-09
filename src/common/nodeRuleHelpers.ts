@@ -2,7 +2,7 @@
  * Helper funcation and types for creating tslint rules.
  */
 import * as Lint from 'tslint';
-import * as ts from 'typescript';
+import ts from 'typescript';
 
 export type UntypedNodeRuleFunction<TOptions> = (
   node: ts.Node,
