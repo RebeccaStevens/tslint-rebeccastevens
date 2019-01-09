@@ -6,6 +6,7 @@
 import rollupPluginCommonjs from 'rollup-plugin-commonjs';
 import rollupPluginNodeResolve from 'rollup-plugin-node-resolve';
 import { terser as rollupPluginTerser } from 'rollup-plugin-terser';
+import rollupPluginPrettier from 'rollup-plugin-prettier';
 import rollupPluginTypescript from 'rollup-plugin-typescript';
 import rollupPluginUnassert from 'rollup-plugin-unassert';
 
@@ -41,7 +42,10 @@ export default {
     rollupPluginUnassert({
       include: './src/**/*.ts'
     }),
-    rollupPluginTerser(terserConfig)
+    rollupPluginTerser(terserConfig),
+    rollupPluginPrettier({
+      parser: 'babylon'
+    })
   ],
 
   treeshake: {
