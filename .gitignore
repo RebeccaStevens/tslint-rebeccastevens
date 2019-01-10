@@ -4,7 +4,7 @@ node_modules/
 # Logs
 *.log
 
-# Generate Files
+# Generated Files
 /rules
 /tslint.json
 /ruleset-*.json
