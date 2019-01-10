@@ -14,6 +14,7 @@ export type AccessExpression =
 export type TypedFunctionLikeDeclaration =
   & ts.FunctionLikeDeclaration
   & {
+    // tslint:disable-next-line: completed-docs
     readonly type: ts.TypeNode;
   };
 
