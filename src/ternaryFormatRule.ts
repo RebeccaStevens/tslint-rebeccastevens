@@ -3,15 +3,14 @@
  */
 
 import * as assert from 'assert';
-import * as Lint from 'tslint';
-import * as ts from 'typescript';
-
 import deepEqual from 'deep-equal';
+import * as Lint from 'tslint';
 import {
   isCallExpression,
   isConditionalExpression
 } from 'tsutils/typeguard';
 import { getLineRanges } from 'tsutils/util';
+import ts from 'typescript';
 
 import {
   createNodeRule,
@@ -926,7 +925,7 @@ function getIdealCodePartial(
       0
     );
   // if (onSameLine) {
-    console.log(idealInfo.position.start.character, previousPartialInfo.endCharacter);
+  console.log(idealInfo.position.start.character, previousPartialInfo.endCharacter);
   // }
   const leadingComment = formatComment(idealInfo.leadingComment, spacesToInsertBefore, true);
   const leadingCommentNewLines = leadingComment.match(/\n/g);
