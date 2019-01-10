@@ -1,6 +1,7 @@
 {
   "extends": "../../tslint.json",
   "rules": {
+    "completed-docs": false,
     "missing-jsdoc": false,
     "newline-per-chained-call": false,
     "no-import-side-effect": false,

@@ -1,5 +1,4 @@
 import { RuleConfig } from './RuleConfig';
-
 import standardRuleSet from './standard';
 
 const defaultSeverity = 'error';
