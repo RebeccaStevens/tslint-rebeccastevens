@@ -44,7 +44,7 @@ export default {
     }),
     rollupPluginTerser(terserConfig),
     rollupPluginPrettier({
-      parser: 'babylon'
+      parser: 'babel'
     })
   ],
 
