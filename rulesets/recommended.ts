@@ -86,7 +86,7 @@ const builtInRules: RuleConfig = {
   'unified-signatures': true,
 
   // Functionality
-  'await-promise': true,
+  'await-promise': [true, 'Thenable', 'PromiseLike'],
   'ban-comma-operator': true,
   'ban': false,
   'curly': true,
@@ -442,7 +442,7 @@ const immutableRules: RuleConfig = {
     true,
     {
       'ignore-prefix': mutablePrefixes,
-      'ignore-mutation-following-accessor': true
+      'ignore-new-array': true
     }
   ],
   'no-object-mutation': [
