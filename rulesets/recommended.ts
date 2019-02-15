@@ -344,11 +344,19 @@ const consistentCodestyleRules: RuleConfig = {
       format: ['camelCase', 'UPPER_CASE']
     },
     // Exported constants can be PascalCase, camelCase or UPPER_CASE
-    // (as their type cannot be determined i.e. could be initilizes to a class).
+    // (as their type cannot be determined i.e. could be initialized to a class).
     {
       type: 'variable',
       modifiers: ['export', 'const'],
       format: ['PascalCase', 'camelCase', 'UPPER_CASE']
+    },
+    // Allow mutable prefix on variables.
+    {
+      type: 'variable',
+      prefix: [
+        'mutable_',
+        ''
+      ]
     },
     // Require exported constant variables that are initialized with functions to be camelCase.
     {
@@ -374,6 +382,14 @@ const consistentCodestyleRules: RuleConfig = {
       modifiers: 'protected',
       leadingUnderscore: 'require'
     },
+    // Allow mutable prefix on members.
+    {
+      type: 'member',
+      prefix: [
+        'mutable_',
+        ''
+      ]
+    },
     // Explicitly disable the format check only for method toJSON.
     {
       type: 'method',
@@ -397,12 +413,6 @@ const consistentCodestyleRules: RuleConfig = {
       modifiers: 'abstract',
       prefix: 'Abstract'
     },
-    // // Interface names must start with "I". The following part of the name must be valid PascalCase
-    // // Using interface-name
-    // {
-    //   type: 'interface',
-    //   prefix: 'I'
-    // },
     // Enum members must be in PascalCase.
     {
       type: 'enumMember',
