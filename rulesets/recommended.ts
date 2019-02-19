@@ -319,7 +319,8 @@ const cleanCodeRules: RuleConfig = {
  */
 const sonarTSRules: RuleConfig = {
   'no-nested-template-literals': false,
-  'no-small-switch': false
+  'no-small-switch': false,
+  'no-useless-cast': false // using no-unnecessary-type-assertion instead
 };
 
 /**
