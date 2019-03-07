@@ -27,13 +27,14 @@ export default {
     sourcemap: false
   },
 
-  external: [
-    'tslint',
-    'tsutils',
-    'tsutils/typeguard',
-    'tsutils/util',
-    'typescript'
-  ],
+  external: id => {
+    // Internal?
+    if (id.startsWith('.') || id.startsWith('/')) {
+      return false;
+    }
+
+    return true;
+  },
 
   plugins: [
     rollupPluginNodeResolve(),

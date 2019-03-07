@@ -291,7 +291,7 @@ const builtInRules: RuleConfig = {
   'space-within-parens': [true, 0],
   'switch-final-break': [true, 'always'],
   'type-literal-delimiter': true,
-  'variable-name': false, // using `naming-convention`
+  'variable-name': [true, 'ban-keywords'],
   'whitespace': [
     true,
     'check-branch',

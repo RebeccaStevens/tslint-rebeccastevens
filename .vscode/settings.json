@@ -3,6 +3,13 @@
   "editor.tabSize": 2,
 
   "files.trimTrailingWhitespace": true,
+  "files.exclude": {
+    ".jest": true,
+    ".nyc_output": true,
+    "coverage": true,
+    "coverage-partial": true,
+    "rules": true,
+  },
 
   "typescript.tsdk": "./node_modules/typescript/lib",
 
