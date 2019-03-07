@@ -12,16 +12,12 @@ A [TSLint](https://palantir.github.io/tslint/) sharable config with custom rules
 
 ## Install
 
-With yarn:
-
 ```sh
-yarn add --dev @rebeccastevens/tslint-rebeccastevens
-```
-
-With npm:
-
-```sh
+# Install with npm:
 npm install --save-dev @rebeccastevens/tslint-rebeccastevens
+
+# Install with yarn:
+yarn add -D @rebeccastevens/tslint-rebeccastevens
 ```
 
 ## Usage
