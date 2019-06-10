@@ -82,7 +82,7 @@
     "ts-jest": "^24.0.2",
     "ts-node": "^8.2.0",
     "tslint": "^5.17.0",
-    "typescript": "^3.3.3333",
+    "typescript": "^3.5.1",
     "typescript-tslint-plugin": "^0.5.0"
   },
   "peerDependencies": {

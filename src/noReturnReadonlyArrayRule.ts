@@ -168,8 +168,8 @@ function inspectTupleTypeNode(
   safeToReplace: boolean,
   nodeToMark?: ts.Node
 ): Array<InvalidNodeResult> {
-  // tslint:disable-next-line:no-any
-  const mutableIds: any = {};
+  // tslint:disable-next-line: readonly-keyword
+  const mutableIds: { [n: number]: boolean } = {};
 
   return (
     /**
@@ -193,14 +193,12 @@ function inspectTupleTypeNode(
     )
     // Filter out duplicates.
     .filter((item) => {
-      // tslint:disable:no-unsafe-any
       const id = item.node.pos;
       if (mutableIds[id]) {
         return false;
       }
       mutableIds[id] = true;
       return true;
-      // tslint:enable:no-unsafe-any
     })
   );
 }
