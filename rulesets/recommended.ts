@@ -4,7 +4,7 @@ import standardRuleSet from './standard';
 const defaultSeverity = 'error';
 const rulesDirectory = './rules';
 const tslintExtends: ReadonlyArray<string> = [
-  'tslint-microsoft-contrib',
+  'tslint-microsoft-contrib/latest',
   'tslint-consistent-codestyle',
   'tslint-clean-code',
   'tslint-sonarts',
