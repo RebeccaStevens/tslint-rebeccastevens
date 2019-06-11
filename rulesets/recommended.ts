@@ -161,7 +161,6 @@ const builtInRules: RuleConfig = {
   },
   'no-unsafe-finally': true,
   'no-unused-expression': true,
-  'no-use-before-declare': true,
   'no-var-keyword': true,
   'no-void-expression': true,
   'prefer-conditional-expression': [true, 'check-else-if'],
