@@ -57,13 +57,9 @@ type ParseOptionsFunction<TOptions> = (
 
 type RuleArgument =
   | string
-  | {
-      readonly [key: string]: unknown;
-    };
+  | object;
 
-interface RuleOptions {
-  readonly [key: string]: unknown;
-}
+type RuleOptions = object;
 
 /**
  * Create a Rule class from a rule function that analyzes nodes one by one.
@@ -172,22 +168,26 @@ export function parseOptions<TOptions extends RuleOptions>(
       switch (typeof arg) {
         case 'string':
           return {
-            ...(options as {}),
+            ...options,
             [camelize(arg)]: true
           } as TOptions;
 
         case 'object':
           return {
-            ...(options as {}),
+            ...options,
             ...(Object
               .keys(arg)
-              .reduce<TOptions>((options2, key) => {
-                return {
-                  ...(options2 as {}),
-                  [camelize(key)]: arg[key]
-                } as TOptions;
-              }, {} as TOptions) as {})
-          } as TOptions;
+              .reduce<TOptions>(
+                (carry, key) => {
+                  return {
+                    ...(carry as {}),
+                    // tslint:disable-next-line: no-any
+                    [camelize(key)]: (arg as any)[key]
+                  } as TOptions;
+                }, {} as TOptions
+              )
+            )
+          };
       }
     },
     {} as TOptions

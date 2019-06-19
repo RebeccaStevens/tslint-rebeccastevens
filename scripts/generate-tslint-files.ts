@@ -48,7 +48,7 @@ Promise.all([
   .then(() => {
     console.error('TSLint files have been generated.');
   })
-  .catch((error: unknown) => {
+  .catch((error) => {
     console.error('Something went wrong.', error);
     process.exit(1);
   });
