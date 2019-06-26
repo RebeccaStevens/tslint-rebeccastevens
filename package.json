@@ -55,7 +55,7 @@
     "tsutils": "^3.14.0"
   },
   "devDependencies": {
-    "@types/fs-extra": "^7.0.0",
+    "@types/fs-extra": "^8.0.0",
     "@types/istanbul-lib-coverage": "^2.0.1",
     "@types/jest": "^24.0.13",
     "@types/js-yaml": "^3.12.1",
